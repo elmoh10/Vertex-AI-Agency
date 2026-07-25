@@ -333,7 +333,7 @@ export default function DashboardOverview({
                   </div>
                   <p className="font-semibold text-slate-200 line-clamp-1">{log.event}</p>
                   <p className="text-[10px] text-slate-400 font-mono truncate">
-                    قناة: {log.channel === 'whatsapp' ? 'واتساب' : log.channel === 'instagram' ? 'إنستجرام' : 'التحقق'}
+                    قناة: {log.channel === 'whatsapp' ? 'واتساب' : log.channel === 'instagram' ? 'إنستجرام' : log.channel === 'telegram' ? 'تليجرام' : 'التحقق'}
                   </p>
                 </div>
               ))

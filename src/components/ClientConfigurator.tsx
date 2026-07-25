@@ -105,6 +105,7 @@ export default function ClientConfigurator({
   const [instagramAccessToken, setInstagramAccessToken] = useState('');
   const [facebookPageId, setFacebookPageId] = useState('');
   const [facebookAccessToken, setFacebookAccessToken] = useState('');
+  const [telegramBotToken, setTelegramBotToken] = useState('');
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(false);
 
   const [isLinkingSheets, setIsLinkingSheets] = useState(false);
@@ -138,6 +139,7 @@ export default function ClientConfigurator({
         setInstagramAccessToken(biz.instagramAccessToken || '');
         setFacebookPageId(biz.facebookPageId || '');
         setFacebookAccessToken(biz.facebookAccessToken || '');
+        setTelegramBotToken(biz.telegramBotToken || '');
         setAutoPilotEnabled(biz.autoPilotEnabled || false);
         setSaveStatus('idle');
         setSheetsError('');
@@ -357,6 +359,7 @@ export default function ClientConfigurator({
       instagramAccessToken,
       facebookPageId,
       facebookAccessToken,
+      telegramBotToken,
       autoPilotEnabled
     };
 
@@ -584,11 +587,48 @@ export default function ClientConfigurator({
               <div>
                 <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                   <MessageSquareCode className="w-4 h-4 text-emerald-400" />
-                  قائمة الردود الجاهزة والأسئلة الشائعة (Quick Replies)
+                  قوالب ردود ذكية (Smart Response Templates)
                 </h4>
                 <p className="text-[11px] text-slate-400 mt-1">
                   قم بتعريف إجابات ثابتة ومباشرة للأسئلة المتكررة لعميلك، بحيث يلتزم بها الذكاء الاصطناعي بشكل دقيق ومباشر عند توجيه السؤال له.
                 </p>
+              </div>
+
+              {/* Template Suggestions */}
+              <div className="flex flex-wrap gap-2 mb-2 mt-4">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setNewQuestion('ما هي ساعات العمل لديكم؟');
+                    setNewAnswer('نعمل من الأحد للخميس من الساعة 9 صباحاً حتى 5 مساءً.');
+                  }}
+                  className="text-[10px] bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-slate-300 px-3 py-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  قالب ساعات العمل
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setNewQuestion('أين يقع مقركم؟ / ما هو عنوانكم؟');
+                    setNewAnswer('يقع مقرنا الرئيسي في الرياض، حي العليا، شارع التحلية.');
+                  }}
+                  className="text-[10px] bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-slate-300 px-3 py-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  قالب العنوان والموقع
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setNewQuestion('كيف يمكنني التواصل معكم؟');
+                    setNewAnswer('يمكنك التواصل معنا عبر الواتساب على هذا الرقم أو الاتصال بنا مباشرة.');
+                  }}
+                  className="text-[10px] bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-slate-300 px-3 py-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  قالب طرق التواصل
+                </button>
               </div>
 
               {/* Add form */}
@@ -605,7 +645,7 @@ export default function ClientConfigurator({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400">الرد الثابت المعتمد من صاحب العمل</label>
+                    <label className="text-[10px] font-bold text-slate-400">قالب الرد الذكي المعتمد للذكاء الاصطناعي</label>
                     <input 
                       type="text"
                       placeholder="مثال: نعم، تتوفر مواقف مجانية واسعة أمام المبنى."
@@ -623,7 +663,7 @@ export default function ClientConfigurator({
                     className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-40 text-emerald-400 border border-emerald-900/40 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>إضافة لقائمة الردود</span>
+                    <span>إضافة كقالب للرد</span>
                   </button>
                 </div>
               </div>
@@ -632,7 +672,7 @@ export default function ClientConfigurator({
               <div className="space-y-2">
                 {quickReplies.length === 0 ? (
                   <div className="text-center p-6 bg-slate-950/40 rounded-xl border border-slate-900 text-xs text-slate-500">
-                    لم تقم بإضافة ردود جاهزة مخصصة بعد لهذا المشترك. سيستخدم الـ AI المعلومات العامة في الرد.
+                    لم تقم بإضافة قوالب ردود ذكية مخصصة بعد لهذا المشترك. سيستخدم الـ AI المعلومات العامة في الرد.
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -773,9 +813,48 @@ export default function ClientConfigurator({
                     className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
                   />
                 </div>
+              
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400">توكن بوت تليجرام (Telegram Bot Token)</label>
+                  <input 
+                    type="text"
+                    value={telegramBotToken}
+                    onChange={(e) => setTelegramBotToken(e.target.value)}
+                    placeholder="مثال: 123456789:ABCdefGHIjklMNOpqrSTUvwxYZ"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
+                  />
+                  {telegramBotToken && (
+                    <div className="mt-2 p-2 bg-slate-900 rounded-lg border border-slate-800">
+                      <div className="text-[10px] text-emerald-500 mb-2">
+                        رابط الويبهوك الخاص بك: 
+                        <span className="font-mono text-emerald-400 mr-1 select-all break-all">
+                          {window.location.origin}/api/webhooks/telegram/{selectedBizId}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const url = `https://api.telegram.org/bot${telegramBotToken}/setWebhook?url=${window.location.origin}/api/webhooks/telegram/${selectedBizId}`;
+                            const res = await fetch(url);
+                            const data = await res.json();
+                            if (data.ok) {
+                              alert('تم ربط تليجرام وتفعيل الويبهوك بنجاح! 🚀');
+                            } else {
+                              alert('حدث خطأ أثناء الربط: ' + data.description);
+                            }
+                          } catch (e) {
+                            alert('فشل الاتصال بخوادم تليجرام.');
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold rounded flex items-center gap-1 transition-all"
+                      >
+                        تفعيل الربط تلقائياً
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-
             {/* Google Sheets Integration Section */}
             <div className="border-t border-slate-800/80 pt-6 space-y-4">
               <div>
@@ -851,7 +930,7 @@ export default function ClientConfigurator({
                   <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/60 flex items-start gap-2">
                     <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
                     <p className="text-[10px] text-slate-400 leading-normal">
-                      <strong>نصيحة التشغيل:</strong> عند تلقي أي حجز أو شكوى جديدة من واتساب أو إنستجرام للعميل، سيتم تدوينها فوراً وفي غضون أجزاء من الثانية بصفحة "الحجوزات" أو صفحة "الشكاوى والاقتراحات" بجدول البيانات المتصل.
+                      <strong>نصيحة التشغيل:</strong> عند تلقي أي حجز أو شكوى جديدة من واتساب، إنستجرام، أو تليجرام للعميل، سيتم تدوينها فوراً وفي غضون أجزاء من الثانية بصفحة "الحجوزات" أو صفحة "الشكاوى والاقتراحات" بجدول البيانات المتصل.
                     </p>
                   </div>
                 </div>
@@ -986,9 +1065,9 @@ export default function ClientConfigurator({
 
               {/* Quick Replies list in Live Preview */}
               <div className="space-y-2 border-t border-slate-800/80 pt-3.5">
-                <span className="text-xs text-slate-400 block font-bold">الردود الثابتة المبرمجة ({quickReplies.length}):</span>
+                <span className="text-xs text-slate-400 block font-bold">قوالب الردود الذكية المبرمجة ({quickReplies.length}):</span>
                 {quickReplies.length === 0 ? (
-                  <span className="text-[10px] text-slate-500 block">لا توجد ردود ثابتة مخصصة لهذا المشترك.</span>
+                  <span className="text-[10px] text-slate-500 block">لا توجد قوالب ردود ذكية مخصصة لهذا المشترك.</span>
                 ) : (
                   <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                     {quickReplies.map((qr) => (

@@ -60,7 +60,7 @@ const DEFAULT_PLANS = [
     accentColor: 'border-slate-700 hover:border-slate-600',
     features: [
       'وكيل ذكاء اصطناعي أساسي',
-      'ربط قناة واحدة (واتساب أو إنستجرام)',
+      'ربط قناة واحدة (واتساب، إنستجرام، أو تليجرام)',
       'حد أقصى: 100 رد ذكاء اصطناعي شهرياً',
       'تتبع الحجوزات يدوياً',
       'لوحة تحكم بسيطة لإدارة المنشأة',
@@ -81,7 +81,7 @@ const DEFAULT_PLANS = [
     accentColor: 'border-emerald-500/80 hover:border-emerald-400 shadow-md shadow-emerald-500/5',
     isPopular: true,
     features: [
-      'تكامل كامل مع WhatsApp & Instagram',
+      'تكامل كامل مع واتساب وإنستجرام',
       'حد أقصى: 1,000 رد ذكاء اصطناعي شهرياً',
       'أتمتة كاملة لجدولة الحجوزات وتأكيد المواعيد',
       'مزامنة تلقائية مع جداول بيانات Google Sheets',
@@ -103,6 +103,7 @@ const DEFAULT_PLANS = [
     accentColor: 'border-amber-500/80 hover:border-amber-400 shadow-md shadow-amber-500/5',
     features: [
       'كل ما تشمله الباقة المتقدمة',
+      'تكامل إضافي مع منصة تليجرام (Telegram)',
       'ردود ذكاء اصطناعي غير محدودة شهرياً',
       'تفعيل مكتب الشكاوى الذكي (Complaints Desk)',
       'تحليلات متقدمة لبيانات العملاء وتحليل المشاعر',

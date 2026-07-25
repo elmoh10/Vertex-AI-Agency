@@ -547,6 +547,11 @@ let paymentRequests: PaymentRequest[] = [
   }
 ];
 
+
+app.get("/api/health/ai", (req, res) => {
+  res.json({ connected: !!process.env.GEMINI_API_KEY });
+});
+
 app.get("/api/state", (req, res) => {
   const { businessId, role } = req.query;
   console.log("Query params:", req.query);
@@ -740,7 +745,7 @@ app.post("/api/payment/reject", (req, res) => {
 
 // Update Business Configuration
 app.post("/api/business/update", (req, res) => {
-  const { id, name, systemPrompt, welcomeMessage, services, workingHours, quickReplies, googleSheetsId, googleSheetsLinked, googleSheetsAccessToken, whatsappSenderNumber, instagramAccountId, instagramAccessToken, facebookPageId, facebookAccessToken } = req.body;
+  const { id, name, systemPrompt, welcomeMessage, services, workingHours, quickReplies, googleSheetsId, googleSheetsLinked, googleSheetsAccessToken, whatsappSenderNumber, instagramAccountId, instagramAccessToken, facebookPageId, facebookAccessToken, telegramBotToken } = req.body;
   const index = businesses.findIndex(b => b.id === id);
   if (index !== -1) {
     businesses[index] = {
@@ -758,7 +763,8 @@ app.post("/api/business/update", (req, res) => {
       instagramAccountId: instagramAccountId !== undefined ? instagramAccountId : businesses[index].instagramAccountId,
       instagramAccessToken: instagramAccessToken !== undefined ? instagramAccessToken : businesses[index].instagramAccessToken,
       facebookPageId: facebookPageId !== undefined ? facebookPageId : businesses[index].facebookPageId,
-      facebookAccessToken: facebookAccessToken !== undefined ? facebookAccessToken : businesses[index].facebookAccessToken
+      facebookAccessToken: facebookAccessToken !== undefined ? facebookAccessToken : businesses[index].facebookAccessToken,
+      telegramBotToken: telegramBotToken !== undefined ? telegramBotToken : businesses[index].telegramBotToken
     };
     logWebhook("system", "whatsapp", `تحديث إعدادات عميل: ${businesses[index].name}`, { updated_fields: Object.keys(req.body) }, id, "success");
     return res.json({ success: true, business: businesses[index] });
@@ -1084,7 +1090,7 @@ app.post("/api/bookings/manage", (req, res) => {
     else if (action === "cancel") bookings[index].status = "cancelled";
     else if (action === "complete") bookings[index].status = "completed";
     else if (action === "remind") {
-      // Simulate sending a reminder
+      bookings[index].reminderSent = true;
       logWebhook("system", "whatsapp", `تم إرسال رسالة تذكير للعميل: ${bookings[index].customerName} بموعده`, { bookingId: id }, bookings[index].businessId, "success");
       return res.json({ success: true, booking: bookings[index], message: "تم إرسال التذكير بنجاح" });
     }
@@ -1216,41 +1222,9 @@ app.post("/api/reset", (req, res) => {
 });
 
 // Real-time AI simulation engine endpoint
-app.post("/api/simulate-chat", async (req, res) => {
-  const { businessId, message, channel, senderName, senderPhone } = req.body;
 
-  const biz = businesses.find(b => b.id === businessId);
-  if (!biz) {
-    return res.status(404).json({ error: "العمل المحدد غير متوفر" });
-  }
-
-  // Raw Webhook simulation input logged
-  const incomingPayload = {
-    object: channel === "whatsapp" ? "whatsapp_business_account" : "instagram_account",
-    entry: [
-      {
-        id: "entry_id_123",
-        time: Math.floor(Date.now() / 1000),
-        messaging: [
-          {
-            sender: { id: senderPhone || "simulated_user_id" },
-            recipient: { id: "agency_account_id" },
-            timestamp: Date.now(),
-            message: {
-              mid: "mid." + Math.random().toString(36).substring(2, 12),
-              text: message,
-              profile: { name: senderName || "عميل تجريبي" }
-            }
-          }
-        ]
-      }
-    ]
-  };
-
-  logWebhook("incoming", channel, `مستلم عبر ${channel === 'whatsapp' ? 'واتساب' : 'إنستجرام'}: "${message}"`, incomingPayload, biz.id, "success");
-
+async function processAgentInteraction(biz, message, channel, senderName, senderPhone) {
   try {
-    // Call Gemini to handle conversational logic and extract structured data
     const systemPrompt = `
 You are the AI Automation Core for a customer service agency representing: "${biz.name}".
 Your task is to analyze the incoming message and produce an automated, highly-empathetic, and helpful response, as well as extract any business actions (such as reserving/booking an appointment or registering a customer complaint).
@@ -1263,8 +1237,7 @@ Business Configuration for ${biz.name}:
 - Custom Static/Quick Replies (الردود الجاهزة الثابتة للأسئلة المتكررة):
 ${biz.quickReplies && biz.quickReplies.length > 0 
   ? biz.quickReplies.map(qr => `  * السؤال المتكرر: "${qr.question}" -> الإجابة الثابتة: "${qr.answer}"`).join("\n")
-  : "  (لا توجد ردود جاهزة مخصصة حالياً.)"
-}
+  : "  (لا توجد ردود جاهزة مخصصة حالياً.)"}
 
 Current Date Context: The current local time is ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA')}.
 
@@ -1276,49 +1249,29 @@ Otherwise, classify it as "FAQ" or "OTHER" and answer appropriately.
 Keep your Arabic conversational response 'responseText' friendly, highly localized, and matching the style of ${biz.name}.
     `;
 
-    // Construct the Schema
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
-        responseText: {
-          type: Type.STRING,
-          description: "An elegant, polite response in Arabic representing the brand tone perfectly."
-        },
-        actionDetected: {
-          type: Type.BOOLEAN,
-          description: "True if the user requests booking an appointment or files a complaint."
-        },
-        actionType: {
-          type: Type.STRING,
-          description: "Type of action: BOOKING, COMPLAINT, FAQ, or OTHER."
-        },
+        responseText: { type: Type.STRING, description: "An elegant, polite response in Arabic representing the brand tone perfectly." },
+        actionDetected: { type: Type.BOOLEAN, description: "True if the user requests booking an appointment or files a complaint." },
+        actionType: { type: Type.STRING, description: "Type of action: BOOKING, COMPLAINT, FAQ, or OTHER." },
         bookingDetails: {
           type: Type.OBJECT,
-          description: "Extracted booking values if actionType is BOOKING.",
           properties: {
-            customerName: { type: Type.STRING, description: "Customer name" },
-            customerPhone: { type: Type.STRING, description: "Customer phone number" },
-            service: { type: Type.STRING, description: "Matched service from the business's list" },
-            date: { type: Type.STRING, description: "Parsed date in YYYY-MM-DD format (or string description)" },
-            time: { type: Type.STRING, description: "Parsed time in HH:MM format (or description)" },
-            notes: { type: Type.STRING, description: "Any extra notes" }
+            customerName: { type: Type.STRING },
+            customerPhone: { type: Type.STRING },
+            service: { type: Type.STRING },
+            date: { type: Type.STRING },
+            time: { type: Type.STRING },
+            notes: { type: Type.STRING }
           }
         },
         complaintDetails: {
           type: Type.OBJECT,
-          description: "Extracted complaint values if actionType is COMPLAINT.",
           properties: {
-            category: { type: Type.STRING, description: "Calculated category (e.g., delay, quality, pricing, bad attitude)" },
-            summary: { type: Type.STRING, description: "A concise summary of the issue" },
-            sentiment: { type: Type.STRING, description: "Sentiment score: positive, neutral, or negative" }
-          }
-        },
-        faqDetails: {
-          type: Type.OBJECT,
-          description: "If actionType is FAQ, provide the matching question and draft reply.",
-          properties: {
-            question: { type: Type.STRING, description: "The underlying customer question" },
-            answer: { type: Type.STRING, description: "Standard company response based on rules" }
+            category: { type: Type.STRING },
+            summary: { type: Type.STRING },
+            sentiment: { type: Type.STRING }
           }
         }
       },
@@ -1338,8 +1291,8 @@ Keep your Arabic conversational response 'responseText' friendly, highly localiz
     const parsedResult = JSON.parse(aiResponse.text || "{}");
 
     let actionDetailsText = "";
-    let bookingCreated: Booking | null = null;
-    let complaintCreated: Complaint | null = null;
+    let bookingCreated = null;
+    let complaintCreated = null;
 
     if (parsedResult.actionDetected) {
       if (parsedResult.actionType === "BOOKING") {
@@ -1359,7 +1312,6 @@ Keep your Arabic conversational response 'responseText' friendly, highly localiz
         bookings.unshift(bookingCreated);
         actionDetailsText = `📅 حجز ملقط تلقائياً: ${bookingCreated.service} بتاريخ ${bookingCreated.date} في تمام الساعة ${bookingCreated.time}`;
         
-        // Sync to Google Sheets if linked
         if (biz.googleSheetsLinked && biz.googleSheetsId && biz.googleSheetsAccessToken) {
           appendBookingToSheet(biz.googleSheetsAccessToken, biz.googleSheetsId, bookingCreated);
         }
@@ -1380,39 +1332,19 @@ Keep your Arabic conversational response 'responseText' friendly, highly localiz
         complaints.unshift(complaintCreated);
         actionDetailsText = `⚠️ شكوى مسجلة تلقائياً: ${complaintCreated.category} - بتحليل مشاعر (${complaintCreated.sentiment === 'negative' ? 'غاضب/سلبي' : 'محايد'})`;
         
-        // Sync to Google Sheets if linked
         if (biz.googleSheetsLinked && biz.googleSheetsId && biz.googleSheetsAccessToken) {
           appendComplaintToSheet(biz.googleSheetsAccessToken, biz.googleSheetsId, complaintCreated);
         }
       }
     }
 
-    // Increment Business's AI Response count
     if (biz.aiResponseCount !== undefined) {
       biz.aiResponseCount += 1;
     } else {
       biz.aiResponseCount = 1;
     }
 
-    // Outgoing webhook response simulate
-    const outgoingPayload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: senderPhone || "simulated_user_id",
-      type: "text",
-      text: {
-        body: parsedResult.responseText
-      },
-      metadata: {
-        processed_by: "Vertex_AI_Agency_v3.5",
-        latency_ms: 450,
-        action_triggered: parsedResult.actionDetected ? parsedResult.actionType : "NONE"
-      }
-    };
-
-    logWebhook("outgoing", channel, `رد ملقى عبر ${channel === 'whatsapp' ? 'واتساب' : 'إنستجرام'}`, outgoingPayload, biz.id, "success");
-
-    res.json({
+    return {
       success: true,
       responseText: parsedResult.responseText,
       actionDetected: parsedResult.actionDetected,
@@ -1421,26 +1353,73 @@ Keep your Arabic conversational response 'responseText' friendly, highly localiz
       booking: bookingCreated,
       complaint: complaintCreated,
       fullAIResult: parsedResult
-    });
+    };
 
-  } catch (error: any) {
-    console.error("Gemini API Error in simulation:", error);
+  } catch (error) {
+    console.error("Gemini API Error in processing:", error);
     const fallbackResponse = `أهلاً بك يا أستاذ ${senderName || 'الغالي'}. شكراً لتواصلك مع ${biz.name}. نرجو الانتظار لحظة ريثما يقوم أحد موظفينا بالرد عليك أو يمكنك المحاولة لاحقاً.`;
-    
-    logWebhook("system", channel, "فشل معالجة الذكاء الاصطناعي (خطأ في النظام)", { error: error.message }, biz.id, "failed");
-    
-    res.json({
+    return {
       success: false,
       responseText: fallbackResponse,
       actionDetected: false,
       actionType: "OTHER",
       actionDetailsText: "فشل الاتصال بموديل الذكاء الاصطناعي",
       fullAIResult: { error: String(error.stack || error.message || error) }
-    });
+    };
   }
+}
+
+app.post("/api/simulate-chat", async (req, res) => {
+  const { businessId, message, channel, senderName, senderPhone } = req.body;
+  const biz = businesses.find(b => b.id === businessId);
+  if (!biz) {
+    return res.status(404).json({ error: "العمل المحدد غير متوفر" });
+  }
+
+  const incomingPayload = {
+    object: channel === "whatsapp" ? "whatsapp_business_account" : (channel === 'telegram' ? "telegram_bot" : "instagram_account"),
+    entry: [
+      {
+        id: "entry_id_123",
+        time: Math.floor(Date.now() / 1000),
+        messaging: [
+          {
+            sender: { id: senderPhone || "simulated_user_id" },
+            recipient: { id: "agency_account_id" },
+            timestamp: Date.now(),
+            message: {
+              mid: "mid." + Math.random().toString(36).substring(2, 12),
+              text: message,
+              profile: { name: senderName || "عميل تجريبي" }
+            }
+          }
+        ]
+      }
+    ]
+  };
+
+  logWebhook("incoming", channel, `مستلم عبر ${channel === 'whatsapp' ? 'واتساب' : (channel === 'telegram' ? 'تليجرام' : 'إنستجرام')}: "${message}"`, incomingPayload, biz.id, "success");
+
+  const result = await processAgentInteraction(biz, message, channel, senderName, senderPhone);
+
+  const outgoingPayload = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: senderPhone || "simulated_user_id",
+    type: "text",
+    text: { body: result.responseText },
+    metadata: {
+      processed_by: "Vertex_AI_Agency_v3.5",
+      latency_ms: 450,
+      action_triggered: result.actionDetected ? result.actionType : "NONE"
+    }
+  };
+
+  logWebhook("outgoing", channel, `رد ملقى عبر ${channel === 'whatsapp' ? 'واتساب' : (channel === 'telegram' ? 'تليجرام' : 'إنستجرام')}`, outgoingPayload, biz.id, "success");
+
+  res.json(result);
 });
 
-// Activation Codes Routes
 app.get("/api/activation-codes", (req, res) => {
   res.json(activationCodes);
 });
@@ -1508,10 +1487,99 @@ app.get("/api/webhooks/whatsapp", (req, res) => {
   return res.status(400).send("Bad Request");
 });
 
-app.post("/api/webhooks/whatsapp", (req, res) => {
+app.post("/api/webhooks/whatsapp", async (req, res) => {
   const body = req.body;
   logWebhook("incoming", "whatsapp", "طلب ويبهوك حقيقي مستلم من Meta Cloud API", body);
   res.status(200).send("EVENT_RECEIVED");
+
+  try {
+    if (body.object === "whatsapp_business_account" && body.entry) {
+      for (const entry of body.entry) {
+        for (const change of entry.changes || []) {
+          if (change.value && change.value.messages) {
+            const metadata = change.value.metadata;
+            const messages = change.value.messages;
+            const contacts = change.value.contacts;
+
+            for (const message of messages) {
+              if (message.type === "text") {
+                const text = message.text.body;
+                const senderPhone = message.from;
+                const senderName = contacts && contacts[0] ? contacts[0].profile.name : "عميل";
+                const phoneNumberId = metadata?.phone_number_id;
+
+                const biz = businesses.find(b => b.whatsappSenderNumber === phoneNumberId) || businesses[0];
+                if (!biz) continue;
+
+                const result = await processAgentInteraction(biz, text, "whatsapp", senderName, senderPhone);
+
+                if (process.env.META_ACCESS_TOKEN && phoneNumberId) {
+                  await fetch(`https://graph.facebook.com/v17.0/${phoneNumberId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${process.env.META_ACCESS_TOKEN}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      messaging_product: 'whatsapp',
+                      to: senderPhone,
+                      type: 'text',
+                      text: { body: result.responseText }
+                    })
+                  });
+                  logWebhook("outgoing", "whatsapp", `تم إرسال رد تلقائي إلى ${senderPhone}`, { responseText: result.responseText }, biz.id, "success");
+                } else {
+                  logWebhook("system", "whatsapp", "تم معالجة الرسالة ولكن META_ACCESS_TOKEN غير متوفر لإرسال الرد الحقيقي", result, biz.id, "success");
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error processing real webhook:", error);
+    logWebhook("system", "whatsapp", "خطأ أثناء معالجة الويبهوك الحقيقي", { error: String(error) }, null, "failed");
+  }
+});
+
+
+
+app.post("/api/webhooks/telegram/:businessId", async (req, res) => {
+  const { businessId } = req.params;
+  const body = req.body;
+  
+  res.status(200).send("OK");
+  
+  try {
+    const biz = businesses.find(b => b.id === businessId);
+    if (!biz || !biz.telegramBotToken) return;
+
+    if (body.message && body.message.text) {
+      const text = body.message.text;
+      const senderId = body.message.chat.id.toString();
+      const senderName = body.message.from.first_name || "عميل";
+
+      logWebhook("incoming", "telegram", `رسالة تليجرام من ${senderName}: "${text}"`, body, biz.id, "success");
+
+      const result = await processAgentInteraction(biz, text, "telegram", senderName, senderId);
+
+      // Send response via Telegram API
+      await fetch(`https://api.telegram.org/bot${biz.telegramBotToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: senderId,
+          text: result.responseText
+        })
+      });
+
+      logWebhook("outgoing", "telegram", `تم إرسال رد تلقائي إلى ${senderId} عبر تليجرام`, { responseText: result.responseText }, biz.id, "success");
+    }
+  } catch (error) {
+    console.error("Error processing Telegram webhook:", error);
+    logWebhook("system", "telegram", "خطأ أثناء معالجة ويبهوك تليجرام", { error: String(error) }, businessId, "failed");
+  }
 });
 
 app.get("/api/webhooks/instagram", (req, res) => {

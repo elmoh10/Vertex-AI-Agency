@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+const fs = require('fs');
+
+const code = `import React, { useState } from 'react';
 import { 
   Code2, 
   Copy, 
@@ -14,9 +16,7 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
-  Workflow,
-  Settings,
-  Save
+  Workflow
 } from 'lucide-react';
 import { BusinessConfig, Plan } from '../types';
 
@@ -36,13 +36,10 @@ export default function IntegrationHub({ businesses, plans, currentUser }: Integ
   const [connectStatus, setConnectStatus] = useState<{ [key: string]: 'idle' | 'connecting' | 'connected' }>({
     whatsapp: 'idle',
     instagram: 'idle',
-    facebook: 'idle',
-    telegram: 'idle'
+    facebook: 'idle'
   });
 
-  const [activeTab, setActiveTab] = useState<'webhooks' | 'workflows' | 'meta_api'>('webhooks');
-  const [metaApiSettings, setMetaApiSettings] = useState({ phoneNumberId: '', accessToken: '' });
-  const [isSavingMeta, setIsSavingMeta] = useState(false);
+  const [activeTab, setActiveTab] = useState<'webhooks' | 'workflows'>('webhooks');
   const [workflows, setWorkflows] = useState([
     { id: '1', trigger: 'intent_booking', action: 'google_sheets' },
     { id: '2', trigger: 'intent_complaint', action: 'send_email' }
@@ -69,10 +66,9 @@ export default function IntegrationHub({ businesses, plans, currentUser }: Integ
 
   // Dynamic server url detection
   const serverBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://api.youragency.com';
-  const whatsappWebhookUrl = `${serverBaseUrl}/api/webhooks/whatsapp`;
-  const instagramWebhookUrl = `${serverBaseUrl}/api/webhooks/instagram`;
-  const facebookWebhookUrl = `${serverBaseUrl}/api/webhooks/facebook`;
-  const telegramWebhookUrl = `${serverBaseUrl}/api/webhooks/telegram`;
+  const whatsappWebhookUrl = \`\${serverBaseUrl}/api/webhooks/whatsapp\`;
+  const instagramWebhookUrl = \`\${serverBaseUrl}/api/webhooks/instagram\`;
+  const facebookWebhookUrl = \`\${serverBaseUrl}/api/webhooks/facebook\`;
   const verifyToken = "VERTEX_AI_AGENCY_TOKEN_2026";
 
   const handleCopy = (text: string, type: 'url' | 'token' | 'nodeCode') => {
@@ -88,15 +84,15 @@ export default function IntegrationHub({ businesses, plans, currentUser }: Integ
     }, 2000);
   };
 
-  const nodeJsCodeSnippet = `// Node.js Express handler to connect Meta (WhatsApp/Instagram) to Vertex AI Agency Core
+  const nodeJsCodeSnippet = \`// Node.js Express handler to connect Meta (WhatsApp/Instagram) to Vertex AI Agency Core
 import express from 'express';
 import fetch from 'node-fetch';
 
 const app = express();
 app.use(express.json());
 
-const VERIFY_TOKEN = "${verifyToken}";
-const VERTEX_AGENCY_API = "${serverBaseUrl}/api/simulate-chat";
+const VERIFY_TOKEN = "\${verifyToken}";
+const VERTEX_AGENCY_API = "\${serverBaseUrl}/api/simulate-chat";
 
 // 1. Meta Webhook Verification Endpoint
 app.get('/webhook', (req, res) => {
@@ -137,7 +133,7 @@ app.post('/webhook', async (req, res) => {
   }
   res.status(200).send("EVENT_RECEIVED");
 });
-app.listen(3000, () => console.log('Your production Vertex AI Agency Webhook is ready!'));`;
+app.listen(3000, () => console.log('Your production Vertex AI Agency Webhook is ready!'));\`;
 
   return (
     <div className="space-y-6" dir="rtl">      
@@ -156,89 +152,25 @@ app.listen(3000, () => console.log('Your production Vertex AI Agency Webhook is 
       <div className="flex space-x-reverse space-x-6 border-b border-slate-800 mb-6">
         <button
           onClick={() => setActiveTab('webhooks')}
-          className={`pb-3 text-sm font-bold transition-colors flex items-center gap-2 ${
+          className={\`pb-3 text-sm font-bold transition-colors flex items-center gap-2 \${
             activeTab === 'webhooks' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-400 hover:text-slate-200'
-          }`}
+          }\`}
         >
           <Code2 className="w-4 h-4" />
           الربط التقني للويب-هوك (Webhooks)
         </button>
         <button
           onClick={() => setActiveTab('workflows')}
-          className={`pb-3 text-sm font-bold transition-colors flex items-center gap-2 ${
+          className={\`pb-3 text-sm font-bold transition-colors flex items-center gap-2 \${
             activeTab === 'workflows' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-slate-400 hover:text-slate-200'
-          }`}
+          }\`}
         >
           <Workflow className="w-4 h-4" />
           محرر مسارات العمل (Workflow Editor)
         </button>
-        <button
-          onClick={() => setActiveTab('meta_api')}
-          className={`pb-3 text-sm font-bold transition-colors flex items-center gap-2 ${
-            activeTab === 'meta_api' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Settings className="w-4 h-4" />
-          إعدادات Meta API
-        </button>
       </div>
 
-      {activeTab === 'meta_api' ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6 max-w-2xl">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-400" />
-                ربط حساب WhatsApp الحقيقي
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                أدخل تفاصيل Meta Business API الخاصة بك لتفعيل إرسال واستقبال الرسائل الحقيقية.
-              </p>
-            </div>
-          </div>
-          
-          <div className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 block">Phone Number ID (معرف رقم الهاتف)</label>
-              <input 
-                type="text" 
-                value={metaApiSettings.phoneNumberId}
-                onChange={e => setMetaApiSettings({...metaApiSettings, phoneNumberId: e.target.value})}
-                placeholder="مثال: 123456789012345"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 text-slate-200 outline-none rounded-xl px-3.5 py-2.5 text-xs transition-colors font-mono"
-              />
-            </div>
-            
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 block">System User Access Token (رمز الوصول الدائم)</label>
-              <textarea 
-                value={metaApiSettings.accessToken}
-                onChange={e => setMetaApiSettings({...metaApiSettings, accessToken: e.target.value})}
-                placeholder="EAAI..."
-                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 text-slate-200 outline-none rounded-xl px-3.5 py-2.5 text-xs transition-colors font-mono min-h-[100px] resize-y custom-scrollbar"
-              />
-            </div>
-            
-            <div className="pt-4 border-t border-slate-800 flex justify-end">
-              <button 
-                onClick={() => {
-                  setIsSavingMeta(true);
-                  setTimeout(() => setIsSavingMeta(false), 1500);
-                }}
-                disabled={isSavingMeta || !metaApiSettings.phoneNumberId || !metaApiSettings.accessToken}
-                className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer"
-              >
-                {isSavingMeta ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                {isSavingMeta ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : activeTab === 'webhooks' ? (
+      {activeTab === 'webhooks' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">          
             {/* Quick Connect Panel */}
@@ -248,22 +180,21 @@ app.listen(3000, () => console.log('Your production Vertex AI Agency Webhook is 
                 الربط السريع بخطوة واحدة (One-Click Connect)
               </h3>
               <p className="text-[11px] text-slate-400">
-                قم بربط قنواتك على منصات ميتا (Meta) وتليجرام بنقرة واحدة لتفعيل الذكاء الاصطناعي مباشرة دون الحاجة لضبط الإعدادات المعقدة.
+                قم بربط قنواتك على منصات ميتا (Meta) بنقرة واحدة لتفعيل الذكاء الاصطناعي مباشرة دون الحاجة لضبط الإعدادات المعقدة.
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                 {[
-                  { id: 'whatsapp', label: 'واتساب أعمال', color: 'bg-[#25D366]', initial: 'و' },
-                  { id: 'instagram', label: 'إنستجرام', color: 'bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]', initial: 'إ' },
-                  { id: 'facebook', label: 'فيسبوك ماسنجر', color: 'bg-[#0084FF]', initial: 'ف' },
-                  { id: 'telegram', label: 'تليجرام', color: 'bg-[#0088cc]', initial: 'ت' },
+                  { id: 'whatsapp', label: 'واتساب أعمال', color: 'bg-[#25D366]' },
+                  { id: 'instagram', label: 'إنستجرام', color: 'bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]' },
+                  { id: 'facebook', label: 'فيسبوك ماسنجر', color: 'bg-[#0084FF]' },
                 ].map(platform => (
                   <button 
                     key={platform.id}
                     onClick={() => simulateConnect(platform.id)}
                     className="flex flex-col items-center justify-center gap-2 bg-slate-950 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-xl p-4 transition-all cursor-pointer"
                   >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg ${platform.color}`}>
-                      {platform.initial}
+                    <div className={\`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg \${platform.color}\`}>
+                      {platform.label.substring(0, 1)}
                     </div>
                     <span className="text-[11px] font-bold text-slate-300">{platform.label}</span>
                     {connectStatus[platform.id] === 'connected' ? (
@@ -318,23 +249,6 @@ app.listen(3000, () => console.log('Your production Vertex AI Agency Webhook is 
                   </div>
                   <div className="p-3 bg-slate-900 rounded border border-slate-800 text-slate-300 font-mono text-left truncate">
                     {isChannelsLimited ? '••••••••••••••••••••••••••••••••••••' : facebookWebhookUrl}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-300 flex items-center gap-2">
-                      نهاية ويبهوك تليجرام (Telegram Webhook)
-                      {isChannelsLimited && (
-                        <span className="bg-amber-500/10 text-amber-400 text-[9px] px-2 py-0.5 rounded border border-amber-900/30 flex items-center gap-1">
-                          <Lock className="w-2.5 h-2.5" />
-                          يتطلب ترقية الباقة
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="p-3 bg-slate-900 rounded border border-slate-800 text-slate-300 font-mono text-left truncate">
-                    {isChannelsLimited ? '••••••••••••••••••••••••••••••••••••' : telegramWebhookUrl}
                   </div>
                 </div>
 
@@ -506,4 +420,5 @@ app.listen(3000, () => console.log('Your production Vertex AI Agency Webhook is 
       )}
     </div>
   );
-}
+}`;
+fs.writeFileSync('src/components/IntegrationHub.tsx', code);

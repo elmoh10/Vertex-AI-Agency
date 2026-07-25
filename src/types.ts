@@ -26,6 +26,8 @@ export interface BusinessConfig {
   instagramAccessToken?: string;
   facebookPageId?: string;
   facebookAccessToken?: string;
+  telegramBotToken?: string;
+  telegramLinked?: boolean;
   autoPilotEnabled?: boolean;
 }
 
@@ -66,7 +68,7 @@ export interface WebhookLog {
   id: string;
   timestamp: string;
   direction: 'incoming' | 'outgoing' | 'system';
-  channel: 'whatsapp' | 'instagram' | 'facebook' | 'webhook_verification' | 'billing';
+  channel: 'whatsapp' | 'instagram' | 'facebook' | 'telegram' | 'webhook_verification' | 'billing';
   event: string;
   payload: any;
   businessId?: string;

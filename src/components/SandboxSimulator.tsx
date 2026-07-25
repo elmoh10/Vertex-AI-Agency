@@ -12,7 +12,8 @@ import {
   ArrowRightLeft,
   CheckCircle,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from 'lucide-react';
 import { BusinessConfig, ChatMessage, Booking, Complaint } from '../types';
 
@@ -21,7 +22,7 @@ interface SandboxSimulatorProps {
   onTriggerSimulation: (
     businessId: string, 
     message: string, 
-    channel: 'whatsapp' | 'instagram',
+    channel: 'whatsapp' | 'instagram' | 'telegram',
     senderName: string,
     senderPhone: string
   ) => Promise<{
@@ -44,14 +45,34 @@ export default function SandboxSimulator({
 }: SandboxSimulatorProps) {
   
   const [selectedBizId, setSelectedBizId] = useState<string>(businesses[0]?.id || '');
-  const [channel, setChannel] = useState<'whatsapp' | 'instagram'>('whatsapp');
+  const [channel, setChannel] = useState<'whatsapp' | 'instagram' | 'telegram'>('whatsapp');
   const [senderName, setSenderName] = useState<string>('هشام المطلق');
   const [senderPhone, setSenderPhone] = useState<string>('0503124599');
   const [userInput, setUserInput] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [aiConnected, setAiConnected] = useState<boolean>(true); // assume true initially
+
+  useEffect(() => {
+    fetch('/api/health/ai')
+      .then(res => res.json())
+      .then(data => setAiConnected(data.connected))
+      .catch(() => setAiConnected(false));
+  }, []);
+
 
   // Chat message history inside the phone simulator
-  const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>({});
+    const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>(() => {
+    try {
+      const saved = localStorage.getItem('sandboxChatHistories');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sandboxChatHistories', JSON.stringify(chatHistories));
+  }, [chatHistories]);
 
   // Active technical log details for the right screen
   const [activeLog, setActiveLog] = useState<{
@@ -265,12 +286,18 @@ export default function SandboxSimulator({
       
       {/* Title block */}
       <div className="border-b border-slate-800 pb-5">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-white flex items-center gap-2 flex-wrap">
           <Smartphone className="w-5 h-5 text-emerald-400" />
           غرفة تجربة ومحاكاة الأتمتة والويب-هوك (Sandbox)
+          <div className="flex items-center gap-1.5 ms-auto md:ms-4 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full">
+            <div className={`w-2 h-2 rounded-full ${aiConnected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'} animate-pulse`} />
+            <span className="text-[10px] font-bold text-slate-300 tracking-wider font-mono">
+              {aiConnected ? 'GEMINI CONNECTED' : 'GEMINI DISCONNECTED'}
+            </span>
+          </div>
         </h2>
         <p className="text-xs text-slate-400">
-          اكتب رسائل تجريبية كأنك عميل يراسل المنشأة عبر واتساب أو إنستجرام وتتبع فوراً كيف يقوم الذكاء الاصطناعي بالرد وتسجيل العمليات وتحديث السجلات تقنياً.
+          اكتب رسائل تجريبية كأنك عميل يراسل المنشأة عبر واتساب أو إنستجرام أو تليجرام وتتبع فوراً كيف يقوم الذكاء الاصطناعي بالرد وتسجيل العمليات وتحديث السجلات تقنياً.
         </p>
       </div>
 
@@ -308,7 +335,16 @@ export default function SandboxSimulator({
                 channel === 'instagram' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              إنستجرام Instagram
+              إنستجرام IG
+            </button>
+            <button 
+              type="button"
+              onClick={() => setChannel('telegram')}
+              className={`flex-1 py-1.5 text-center text-xs font-bold rounded-md transition-all cursor-pointer ${
+                channel === 'telegram' ? 'bg-[#0088cc] text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              تليجرام Telegram
             </button>
           </div>
         </div>
@@ -364,11 +400,11 @@ export default function SandboxSimulator({
           <div className="w-full h-full flex flex-col bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden mt-6 flex-1 max-w-sm">
             {/* Phone Chat Header */}
             <div className={`p-3 text-white flex items-center justify-between border-b ${
-              channel === 'whatsapp' ? 'bg-emerald-950/90 border-emerald-900' : 'bg-gradient-to-r from-purple-950/90 to-pink-950/90 border-purple-900'
+              channel === 'whatsapp' ? 'bg-emerald-950/90 border-emerald-900' : (channel === 'telegram' ? 'bg-blue-950/90 border-blue-900' : 'bg-gradient-to-r from-purple-950/90 to-pink-950/90 border-purple-900')
             }`}>
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 font-bold">
-                  {channel === 'whatsapp' ? 'WA' : 'IG'}
+                  {channel === 'whatsapp' ? 'WA' : (channel === 'telegram' ? 'TG' : 'IG')}
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-100">{currentBiz.name}</h4>
@@ -379,9 +415,25 @@ export default function SandboxSimulator({
                 </div>
               </div>
 
-              <div className="text-[10px] bg-slate-800/80 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-md font-bold">
-                {channel === 'whatsapp' ? 'واتساب' : 'إنستجرام'}
+              
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => {
+                    if (window.confirm('هل أنت متأكد من مسح السجل والبدء من جديد؟')) {
+                      setChatHistories(prev => ({ ...prev, [selectedBizId]: [] }));
+                      setActiveLog(null);
+                    }
+                  }}
+                  className="bg-slate-900/60 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 p-1.5 rounded-md transition-colors"
+                  title="مسح السجل"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+                <div className="text-[10px] bg-slate-800/80 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-md font-bold">
+                  {channel === 'whatsapp' ? 'واتساب' : (channel === 'telegram' ? 'تليجرام' : 'إنستجرام')}
+                </div>
               </div>
+
             </div>
 
             {/* Chat message list screen */}
@@ -390,12 +442,12 @@ export default function SandboxSimulator({
               {activeMessages.map((msg) => (
                 <div 
                   key={msg.id}
-                  className={`max-w-[85%] rounded-2xl p-3 leading-relaxed relative space-y-1.5 ${
+                  className={`max-w-[85%] p-3 leading-relaxed relative space-y-1.5 shadow-sm ${
                     msg.sender === 'customer' 
-                      ? 'bg-slate-800 text-slate-100 self-start rounded-tr-none' 
+                      ? 'bg-emerald-600 text-white self-start rounded-2xl rounded-tr-sm' 
                       : msg.sender === 'agent'
-                      ? 'bg-emerald-950 text-slate-100 self-end rounded-tl-none border border-emerald-900'
-                      : 'bg-slate-900 border border-slate-800 text-slate-400 text-center text-[11px] self-center w-full max-w-full'
+                      ? 'bg-slate-800 text-slate-100 self-end rounded-2xl rounded-tl-sm border border-slate-700'
+                      : 'bg-slate-900 border border-slate-800 text-slate-400 text-center text-[11px] self-center w-full max-w-full rounded-lg'
                   }`}
                 >
                   <p>{msg.text}</p>
@@ -412,11 +464,13 @@ export default function SandboxSimulator({
               ))}
 
               {isTyping && (
-                <div className="bg-emerald-950/50 border border-emerald-900/50 text-slate-300 self-end rounded-2xl rounded-tl-none p-3 max-w-[85%] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  <span className="text-[10px] text-emerald-400/80 mr-1.5 font-bold">المساعد يكتب...</span>
+                <div className="bg-slate-800 border border-slate-700 text-slate-300 self-end rounded-2xl rounded-tl-sm p-3 max-w-[85%] flex items-center gap-2 shadow-sm">
+                  <div className="flex gap-1 items-center">
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-bold">جاري الكتابة...</span>
                 </div>
               )}
 
