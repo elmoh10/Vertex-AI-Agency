@@ -886,7 +886,7 @@ export default function ClientConfigurator({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400">معرف حساب انستجرام</label>
+                  <label className="text-[10px] font-bold text-slate-400">معرف حساب انستجرام (اختياري)</label>
                   <input 
                     type="text"
                     value={instagramAccountId}
@@ -904,7 +904,7 @@ export default function ClientConfigurator({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400">معرف صفحة فيسبوك</label>
+                  <label className="text-[10px] font-bold text-slate-400">معرف صفحة فيسبوك (اختياري)</label>
                   <input 
                     type="text"
                     value={facebookPageId}

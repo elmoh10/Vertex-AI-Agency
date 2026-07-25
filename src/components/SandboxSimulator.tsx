@@ -22,7 +22,7 @@ interface SandboxSimulatorProps {
   onTriggerSimulation: (
     businessId: string, 
     message: string, 
-    channel: 'whatsapp' | 'instagram' | 'telegram',
+    channel: 'whatsapp' | 'instagram' | 'telegram' | 'facebook',
     senderName: string,
     senderPhone: string
   ) => Promise<{
@@ -352,6 +352,15 @@ export default function SandboxSimulator({
             >
               تليجرام Telegram
             </button>
+            <button 
+              type="button"
+              onClick={() => setChannel('facebook')}
+              className={`flex-1 py-1.5 text-center text-xs font-bold rounded-md transition-all cursor-pointer ${
+                channel === 'facebook' ? 'bg-[#0084FF] text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              فيسبوك
+            </button>
           </div>
         </div>
 
@@ -406,11 +415,11 @@ export default function SandboxSimulator({
           <div className="w-full h-full flex flex-col bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden mt-6 flex-1 max-w-sm">
             {/* Phone Chat Header */}
             <div className={`p-3 text-white flex items-center justify-between border-b ${
-              channel === 'whatsapp' ? 'bg-emerald-950/90 border-emerald-900' : (channel === 'telegram' ? 'bg-blue-950/90 border-blue-900' : 'bg-gradient-to-r from-purple-950/90 to-pink-950/90 border-purple-900')
+              channel === 'whatsapp' ? 'bg-emerald-950/90 border-emerald-900' : (channel === 'telegram' ? 'bg-blue-950/90 border-blue-900' : (channel === 'facebook' ? 'bg-[#0084FF]/20 border-[#0084FF]/50' : 'bg-gradient-to-r from-purple-950/90 to-pink-950/90 border-purple-900'))
             }`}>
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 font-bold">
-                  {channel === 'whatsapp' ? 'WA' : (channel === 'telegram' ? 'TG' : 'IG')}
+                  {channel === 'whatsapp' ? 'WA' : (channel === 'telegram' ? 'TG' : (channel === 'facebook' ? 'FB' : 'IG'))}
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-100">{currentBiz.name}</h4>
@@ -436,7 +445,7 @@ export default function SandboxSimulator({
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
                 <div className="text-[10px] bg-slate-800/80 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-md font-bold">
-                  {channel === 'whatsapp' ? 'واتساب' : (channel === 'telegram' ? 'تليجرام' : 'إنستجرام')}
+                  {channel === 'whatsapp' ? 'واتساب' : (channel === 'telegram' ? 'تليجرام' : (channel === 'facebook' ? 'فيسبوك' : 'إنستجرام'))}
                 </div>
               </div>
 

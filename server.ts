@@ -1527,7 +1527,7 @@ app.post("/api/simulate-chat", async (req, res) => {
   }
 
   const incomingPayload = {
-    object: channel === "whatsapp" ? "whatsapp_business_account" : (channel === 'telegram' ? "telegram_bot" : "instagram_account"),
+    object: channel === "whatsapp" ? "whatsapp_business_account" : (channel === 'telegram' ? "telegram_bot" : (channel === 'facebook' ? 'page' : "instagram_account")),
     entry: [
       {
         id: "entry_id_123",
@@ -1548,12 +1548,12 @@ app.post("/api/simulate-chat", async (req, res) => {
     ]
   };
 
-  logWebhook("incoming", channel, `مستلم عبر ${channel === 'whatsapp' ? 'واتساب' : (channel === 'telegram' ? 'تليجرام' : 'إنستجرام')}: "${message}"`, incomingPayload, biz.id, "success");
+  logWebhook("incoming", channel, `مستلم عبر ${channel === 'whatsapp' ? 'واتساب' : (channel === 'telegram' ? 'تليجرام' : (channel === 'facebook' ? 'فيسبوك' : 'إنستجرام'))}: "${message}"`, incomingPayload, biz.id, "success");
 
   const result = await processAgentInteraction(biz, message, channel, senderName, senderPhone);
 
   const outgoingPayload = {
-    messaging_product: "whatsapp",
+    messaging_product: channel === 'whatsapp' ? 'whatsapp' : (channel === 'facebook' ? 'messenger' : channel),
     recipient_type: "individual",
     to: senderPhone || "simulated_user_id",
     type: "text",
@@ -1752,6 +1752,7 @@ app.get("/api/webhooks/facebook", (req, res) => {
 app.post("/api/webhooks/facebook", async (req, res) => {
   const body = req.body;
   res.status(200).send("EVENT_RECEIVED");
+  logWebhook("incoming", "facebook", "رسالة واردة عبر ماسنجر (تجريبي)", { body });
   
   try {
     if (body.object === "page" && body.entry) {
