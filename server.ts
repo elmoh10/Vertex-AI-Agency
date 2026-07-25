@@ -24,6 +24,7 @@ function getDb(): Firestore {
 }
 
 const app = express();
+const knownCustomers = new Set<string>();
 app.use(express.json());
 
 const PORT = 3000;
@@ -244,7 +245,7 @@ let activationCodes: ActivationCode[] = [];
 // Helper to push to webhook logs
 function logWebhook(
   direction: 'incoming' | 'outgoing' | 'system', 
-  channel: 'whatsapp' | 'instagram' | 'facebook' | 'webhook_verification' | 'billing', 
+  channel: 'whatsapp' | 'instagram' | 'facebook' | 'telegram' | 'webhook_verification' | 'billing', 
   event: string, 
   payload: any,
   businessId?: string,
@@ -745,7 +746,7 @@ app.post("/api/payment/reject", (req, res) => {
 
 // Update Business Configuration
 app.post("/api/business/update", (req, res) => {
-  const { id, name, systemPrompt, welcomeMessage, services, workingHours, quickReplies, googleSheetsId, googleSheetsLinked, googleSheetsAccessToken, whatsappSenderNumber, instagramAccountId, instagramAccessToken, facebookPageId, facebookAccessToken, telegramBotToken, welcomeMessageEnabled, autoPilotEnabled, generateInvoiceEnabled } = req.body;
+  const { id, name, systemPrompt, welcomeMessage, services, workingHours, quickReplies, googleSheetsId, googleSheetsLinked, googleSheetsAccessToken, whatsappSenderNumber, instagramAccountId, instagramAccessToken, facebookPageId, facebookAccessToken, telegramBotToken, welcomeMessageEnabled, autoPilotEnabled, generateInvoiceEnabled, inventoryUrl, inventoryType } = req.body;
   const index = businesses.findIndex(b => b.id === id);
   if (index !== -1) {
     businesses[index] = {
@@ -756,6 +757,8 @@ app.post("/api/business/update", (req, res) => {
       welcomeMessageEnabled: welcomeMessageEnabled !== undefined ? welcomeMessageEnabled : businesses[index].welcomeMessageEnabled,
       autoPilotEnabled: autoPilotEnabled !== undefined ? autoPilotEnabled : businesses[index].autoPilotEnabled,
       generateInvoiceEnabled: generateInvoiceEnabled !== undefined ? generateInvoiceEnabled : businesses[index].generateInvoiceEnabled,
+      inventoryUrl: inventoryUrl !== undefined ? inventoryUrl : businesses[index].inventoryUrl,
+      inventoryType: inventoryType !== undefined ? inventoryType : businesses[index].inventoryType,
       services: services || businesses[index].services,
       workingHours: workingHours || businesses[index].workingHours,
       quickReplies: quickReplies !== undefined ? quickReplies : businesses[index].quickReplies,
@@ -816,7 +819,7 @@ app.post("/api/business/create", (req, res) => {
     id: businessId,
     name: name,
     type: type,
-    iconName: type === 'clinic' ? 'Stethoscope' : type === 'restaurant' ? 'Utensils' : type === 'cafe' ? 'Coffee' : 'Award',
+    iconName: type === 'clinic' ? 'Stethoscope' : type === 'restaurant' ? 'Utensils' : type === 'cafe' ? 'Coffee' : type === 'pharmacy' ? 'Pill' : 'Award',
     systemPrompt: `أنت مساعد ذكي للمنشأة ${name}.`,
     welcomeMessage: `مرحباً بك في ${name}!`,
     services: [],
@@ -1243,6 +1246,7 @@ Business Configuration for ${biz.name}:
 - Services Available: ${biz.services.join(", ")}
 - Working Hours: ${biz.workingHours}
 - Custom Identity Guidelines: ${biz.systemPrompt}
+${(biz.inventoryType && biz.inventoryUrl) ? `- Attached Inventory/Menu Data Source: ${biz.inventoryUrl} (You must use this link to check real-time availability, items, and pricing for the user)` : ''}
 - Custom Static/Quick Replies (الردود الجاهزة الثابتة للأسئلة المتكررة):
 ${biz.quickReplies && biz.quickReplies.length > 0 
   ? biz.quickReplies.map(qr => `  * السؤال المتكرر: "${qr.question}" -> الإجابة الثابتة: "${qr.answer}"`).join("\n")
@@ -1254,6 +1258,7 @@ You must return a structured JSON response matching the required schema exactly.
 If the incoming customer message matches or is conceptually identical/highly similar to one of the questions in the "Custom Static/Quick Replies" list above, you MUST prioritize and use its corresponding static answer EXACTLY as the 'responseText' (or use it as the primary core message).
 If the customer wants to book a slot or service, detect it as "BOOKING", extract customer details, match the requested service with one from the lists if possible, parse the requested date (converting absolute expressions like "tomorrow" or "next Sunday" to appropriate format) and requested time.
 If the customer expresses severe dissatisfaction, trouble, or files a formal feedback, classify it as "COMPLAINT", estimate the sentiment ("negative") and summarize it.
+If the customer explicitly requests to speak with a human agent, or if there is an absolute necessity where the AI cannot fulfill the request, classify it as "HUMAN_HANDOFF".
 Otherwise, classify it as "FAQ" or "OTHER" and answer appropriately.
 Keep your Arabic conversational response 'responseText' friendly, highly localized, and matching the style of ${biz.name}.
 ${(biz.type === 'clinic' || biz.type === 'restaurant') && biz.generateInvoiceEnabled 
@@ -1266,7 +1271,7 @@ ${(biz.type === 'clinic' || biz.type === 'restaurant') && biz.generateInvoiceEna
       properties: {
         responseText: { type: Type.STRING, description: "An elegant, polite response in Arabic representing the brand tone perfectly." },
         actionDetected: { type: Type.BOOLEAN, description: "True if the user requests booking an appointment or files a complaint." },
-        actionType: { type: Type.STRING, description: "Type of action: BOOKING, COMPLAINT, FAQ, or OTHER." },
+        actionType: { type: Type.STRING, description: "Type of action: BOOKING, COMPLAINT, HUMAN_HANDOFF, FAQ, or OTHER." },
         bookingDetails: {
           type: Type.OBJECT,
           properties: {
@@ -1307,7 +1312,9 @@ ${(biz.type === 'clinic' || biz.type === 'restaurant') && biz.generateInvoiceEna
     let complaintCreated = null;
 
     if (parsedResult.actionDetected) {
-      if (parsedResult.actionType === "BOOKING") {
+      if (parsedResult.actionType === "HUMAN_HANDOFF") {
+        actionDetailsText = "تم تحويل المحادثة إلى موظف بشري بناءً على طلب العميل أو للضرورة.";
+      } else if (parsedResult.actionType === "BOOKING") {
         const details = parsedResult.bookingDetails || {};
         bookingCreated = {
           id: "b_" + Math.random().toString(36).substr(2, 9),

@@ -93,6 +93,11 @@ export default function SandboxSimulator({
       bizId: "clinic_1"
     },
     {
+      label: "🧑‍💼 طلب تحويل لموظف بشري",
+      text: "أحتاج التحدث مع موظف بشري لو سمحت، واجهتني مشكلة وأحتاج مساعدة حقيقية.",
+      bizId: "clinic_1"
+    },
+    {
       label: "🍲 حجز طاولة غداء (المطعم)",
       text: "السلام عليكم، هل يمكن حجز طاولة عائلية لـ 4 أشخاص اليوم الساعة 9 مساءً؟",
       bizId: "restaurant_1"
@@ -232,7 +237,8 @@ export default function SandboxSimulator({
         text: response.responseText,
         timestamp: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
         isActionTriggered: response.actionDetected,
-        actionDetails: response.actionDetailsText
+        actionDetails: response.actionDetailsText,
+        actionType: response.actionType
       };
 
       setChatHistories(prev => ({
@@ -453,8 +459,8 @@ export default function SandboxSimulator({
                   <p>{msg.text}</p>
                   
                   {msg.isActionTriggered && msg.actionDetails && (
-                    <div className="mt-2 pt-2 border-t border-emerald-900 text-[10px] text-emerald-400 font-semibold flex items-center gap-1 bg-slate-950/40 px-2 py-1 rounded">
-                      <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
+                    <div className={`mt-2 pt-2 border-t text-[10px] font-semibold flex items-center gap-1 bg-slate-950/40 px-2 py-1 rounded ${msg.actionType === 'HUMAN_HANDOFF' ? 'border-amber-900 text-amber-500' : 'border-emerald-900 text-emerald-400'}`}>
+                      {msg.actionType === 'HUMAN_HANDOFF' ? <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" /> : <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />}
                       <span>{msg.actionDetails}</span>
                     </div>
                   )}

@@ -29,6 +29,7 @@ import SandboxSimulator from './components/SandboxSimulator';
 import IntegrationHub from './components/IntegrationHub';
 import PricingManager from './components/PricingManager';
 import UserProfile from './components/UserProfile';
+import OnboardingTour from './components/OnboardingTour';
 
 import { BusinessConfig, Booking, Complaint, WebhookLog, Plan } from './types';
 function App() {
@@ -40,6 +41,7 @@ function App() {
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<{ role: 'owner' | 'supervisor'; businessId?: string; name: string } | null>(null);
+  const [showTour, setShowTour] = useState(false);
 
   // Login/Register state
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
@@ -117,6 +119,9 @@ function App() {
 
   useEffect(() => {
     if (user) {
+      if (!localStorage.getItem('vertex_tour_seen')) {
+        setShowTour(true);
+      }
       fetchState();
       const interval = setInterval(fetchState, 5000);
       return () => clearInterval(interval);
@@ -550,7 +555,15 @@ function App() {
         <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
           {renderContent()}
         </div>
-      </div>
+            </div>
+      {showTour && (
+        <OnboardingTour 
+          onComplete={() => {
+            setShowTour(false);
+            localStorage.setItem('vertex_tour_seen', 'true');
+          }} 
+        />
+      )}
     </div>
   );
 }

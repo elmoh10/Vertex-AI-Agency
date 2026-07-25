@@ -98,6 +98,8 @@ export default function ClientConfigurator({
 
   // Google Sheets Integration states
   const [googleSheetsId, setGoogleSheetsId] = useState('');
+  const [inventoryUrl, setInventoryUrl] = useState('');
+  const [inventoryType, setInventoryType] = useState<'google_sheets' | 'excel' | undefined>();
   const [googleSheetsLinked, setGoogleSheetsLinked] = useState(false);
   const [googleSheetsAccessToken, setGoogleSheetsAccessToken] = useState('');
 
@@ -136,6 +138,8 @@ export default function ClientConfigurator({
         setServices(biz.services || []);
         setQuickReplies(biz.quickReplies || []);
         setGoogleSheetsId(biz.googleSheetsId || '');
+        setInventoryUrl(biz.inventoryUrl || '');
+        setInventoryType(biz.inventoryType);
         setGoogleSheetsLinked(biz.googleSheetsLinked || false);
         setGoogleSheetsAccessToken(biz.googleSheetsAccessToken || '');
         setWhatsappSenderNumber(biz.whatsappSenderNumber || '');
@@ -359,6 +363,8 @@ export default function ClientConfigurator({
       quickReplies,
       googleSheetsId,
       googleSheetsLinked,
+      inventoryUrl,
+      inventoryType,
       googleSheetsAccessToken,
       whatsappSenderNumber,
       instagramAccountId,
@@ -416,6 +422,7 @@ export default function ClientConfigurator({
               <option value="clinic">عيادة</option>
               <option value="restaurant">مطعم</option>
               <option value="cafe">مقهى</option>
+              <option value="pharmacy">صيدلية</option>
             </select>
             <button onClick={handleCreate} className="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer">إضافة</button>
           </div>
@@ -774,6 +781,64 @@ export default function ClientConfigurator({
                 </button>
               </div>
             </div>
+                        {/* Inventory / Menu Upload (Restaurants, Cafes, Pharmacies) */}
+            {(currentBiz.type === 'restaurant' || currentBiz.type === 'cafe' || currentBiz.type === 'pharmacy') && (
+              <div className="border-t border-slate-800/80 pt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-slate-200">
+                    {currentBiz.type === 'pharmacy' ? 'قائمة الأدوية والأسعار والمخزون' : 'المنيو وقائمة الأسعار'}
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-400">
+                  قم بربط ملف Google Sheets أو رفع ملف Excel يحتوي على {currentBiz.type === 'pharmacy' ? 'الأدوية المتاحة وأسعارها' : 'الأصناف المتوفرة'} ليقوم الذكاء الاصطناعي بالرد على العملاء بناءً عليها.
+                </p>
+                <div className="flex gap-4 mb-4">
+                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="inventoryType" 
+                      checked={inventoryType === 'google_sheets'} 
+                      onChange={() => setInventoryType('google_sheets')}
+                      className="accent-emerald-500"
+                    />
+                    رابط Google Sheets
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="inventoryType" 
+                      checked={inventoryType === 'excel'} 
+                      onChange={() => setInventoryType('excel')}
+                      className="accent-emerald-500"
+                    />
+                    ملف Excel
+                  </label>
+                </div>
+                {inventoryType === 'google_sheets' && (
+                  <div className="space-y-2">
+                    <input 
+                      type="text"
+                      value={inventoryUrl}
+                      onChange={(e) => setInventoryUrl(e.target.value)}
+                      placeholder="رابط ملف جوجل شيتس (مثال: https://docs.google.com/spreadsheets/d/...)"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none transition-colors"
+                    />
+                    <span className="text-[10px] text-slate-500 block">تأكد من أن الرابط متاح للقراءة (Anyone with the link).</span>
+                  </div>
+                )}
+                {inventoryType === 'excel' && (
+                  <div className="space-y-2">
+                    <div className="border-2 border-dashed border-slate-800 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-emerald-500/50 transition-colors cursor-pointer bg-slate-950/50">
+                      <FileSpreadsheet className="w-8 h-8 text-slate-500 mb-2" />
+                      <span className="text-sm font-bold text-slate-300">انقر هنا لرفع ملف Excel</span>
+                      <span className="text-xs text-slate-500 mt-1">صيغة xlsx. أو csv.</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
             {/* Automatic Invoice Generation (Clinics & Restaurants only) */}
             {(currentBiz.type === 'clinic' || currentBiz.type === 'restaurant') && (
               <div className="border-t border-slate-800/80 pt-6 space-y-4">

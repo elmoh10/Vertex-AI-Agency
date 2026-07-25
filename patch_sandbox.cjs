@@ -2,63 +2,18 @@ const fs = require('fs');
 let code = fs.readFileSync('src/components/SandboxSimulator.tsx', 'utf8');
 
 code = code.replace(
-  /channel: 'whatsapp' \| 'instagram'/g,
-  `channel: 'whatsapp' | 'instagram' | 'telegram'`
+  /isActionTriggered: response.actionDetected,\n\s*actionDetails: response.actionDetailsText/,
+  "isActionTriggered: response.actionDetected,\n        actionDetails: response.actionDetailsText,\n        actionType: response.actionType"
 );
 
 code = code.replace(
-  /useState\<'whatsapp' \| 'instagram'\>\('whatsapp'\);/g,
-  `useState<'whatsapp' | 'instagram' | 'telegram'>('whatsapp');`
-);
-
-// We need to add the telegram button
-const tabs = `
-            <div className="flex bg-slate-900 rounded-lg p-1 w-fit">
-              <button
-                onClick={() => setChannel('whatsapp')}
-                className={\`px-4 py-1.5 rounded-md text-xs font-bold transition-all \${
-                  channel === 'whatsapp' ? 'bg-emerald-500 text-slate-950 shadow' : 'text-slate-400 hover:text-slate-200'
-                }\`}
-              >
-                واتساب
-              </button>
-              <button
-                onClick={() => setChannel('instagram')}
-                className={\`px-4 py-1.5 rounded-md text-xs font-bold transition-all \${
-                  channel === 'instagram' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                }\`}
-              >
-                إنستجرام
-              </button>
-              <button
-                onClick={() => setChannel('telegram')}
-                className={\`px-4 py-1.5 rounded-md text-xs font-bold transition-all \${
-                  channel === 'telegram' ? 'bg-blue-500 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                }\`}
-              >
-                تليجرام
-              </button>
-            </div>
-`;
-
-code = code.replace(
-  /<div className="flex bg-slate-900 rounded-lg p-1 w-fit">[\s\S]*?<\/div>/,
-  tabs
+  /<CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" \/>/,
+  "{msg.actionType === 'HUMAN_HANDOFF' ? <AlertTriangle className=\\\"w-3 h-3 text-amber-500 shrink-0\\\" /> : <CheckCircle className=\\\"w-3 h-3 text-emerald-400 shrink-0\\\" />}"
 );
 
 code = code.replace(
-  /channel === 'whatsapp' \? 'bg-emerald-950\/90 border-emerald-900' : 'bg-gradient-to-r from-purple-950\/90 to-pink-950\/90 border-purple-900'/g,
-  `channel === 'whatsapp' ? 'bg-emerald-950/90 border-emerald-900' : (channel === 'telegram' ? 'bg-blue-950/90 border-blue-900' : 'bg-gradient-to-r from-purple-950/90 to-pink-950/90 border-purple-900')`
-);
-
-code = code.replace(
-  /\{channel === 'whatsapp' \? 'WA' : 'IG'\}/g,
-  `{channel === 'whatsapp' ? 'WA' : (channel === 'telegram' ? 'TG' : 'IG')}`
-);
-
-code = code.replace(
-  /\{channel === 'whatsapp' \? 'واتساب' : 'إنستجرام'\}/g,
-  `{channel === 'whatsapp' ? 'واتساب' : (channel === 'telegram' ? 'تليجرام' : 'إنستجرام')}`
+  /<div className="mt-2 pt-2 border-t border-emerald-900 text-\[10px\] text-emerald-400 font-semibold flex items-center gap-1 bg-slate-950\/40 px-2 py-1 rounded">/,
+  "<div className={`mt-2 pt-2 border-t text-[10px] font-semibold flex items-center gap-1 bg-slate-950/40 px-2 py-1 rounded ${msg.actionType === 'HUMAN_HANDOFF' ? 'border-amber-900 text-amber-500' : 'border-emerald-900 text-emerald-400'}`}>"
 );
 
 fs.writeFileSync('src/components/SandboxSimulator.tsx', code);

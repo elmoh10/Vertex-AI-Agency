@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
-  Building2, 
-  CalendarCheck, 
+  Building2, MessageCircle, CalendarCheck, 
   MessageSquareWarning, 
   Activity, 
   ArrowUpRight, 
@@ -16,6 +15,7 @@ import {
   Bell
 } from 'lucide-react';
 import { Booking, Complaint, WebhookLog } from '../types';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface DashboardProps {
   bookings?: Booking[];
@@ -51,6 +51,17 @@ export default function DashboardOverview({
   const mostDemandedService = "باقة تجربة كاملة";
   const followUpEnabled = true;
   const followUpCount = 42;
+
+  const whatsappCount = webhookLogs.filter(log => log.channel === 'whatsapp').length;
+  const instagramCount = webhookLogs.filter(log => log.channel === 'instagram').length;
+  const telegramCount = webhookLogs.filter(log => log.channel === 'telegram').length;
+
+  const channelData = [
+    { name: 'واتساب', value: whatsappCount, color: '#10b981' }, // Emerald
+    { name: 'إنستجرام', value: instagramCount, color: '#e1306c' }, // Pink
+    { name: 'تليجرام', value: telegramCount, color: '#3b82f6' }, // Blue
+  ];
+
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -341,6 +352,53 @@ export default function DashboardOverview({
           </div>
         </div>
 
+      </div>
+
+      
+      {/* Channels Distribution Chart */}
+      <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-4">
+        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <MessageCircle className="w-5 h-5 text-purple-400" />
+          توزيع التفاعل عبر القنوات
+        </h3>
+        <p className="text-xs text-slate-400">تحليل لعدد الرسائل الواردة والصادرة عبر مختلف القنوات (واتساب، إنستجرام، وتليجرام).</p>
+        <div className="h-64 w-full">
+          {whatsappCount === 0 && instagramCount === 0 && telegramCount === 0 ? (
+            <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm">
+              لا توجد تفاعلات بعد
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={channelData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {channelData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="rgba(0,0,0,0)" />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
+                  itemStyle={{ color: '#f1f5f9', fontSize: '12px', fontWeight: 'bold' }}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36} 
+                  iconType="circle"
+                  formatter={(value, entry: any) => (
+                    <span className="text-slate-300 text-xs mr-2">{value}</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </div>
 
       {/* Integration Business Cards Quick Links - Only visible to owners */}

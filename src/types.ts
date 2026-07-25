@@ -5,12 +5,15 @@
 export interface BusinessConfig {
   id: string;
   name: string;
-  type: 'clinic' | 'restaurant' | 'cafe' | 'service';
+  type: 'clinic' | 'restaurant' | 'cafe' | 'service' | 'pharmacy';
   iconName: string;
   systemPrompt: string;
   welcomeMessage: string;
   welcomeMessageEnabled?: boolean;
   services: string[];
+  inventoryUrl?: string;
+  inventoryType?: 'google_sheets' | 'excel';
+  inventoryData?: any[];
   workingHours: string;
   phonePlaceholder: string;
   subscriptionPlan?: string;
@@ -84,6 +87,7 @@ export interface ChatMessage {
   timestamp: string;
   isActionTriggered?: boolean;
   actionDetails?: string;
+  actionType?: string;
 }
 
 export interface Plan {
