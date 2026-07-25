@@ -9,6 +9,7 @@ export interface BusinessConfig {
   iconName: string;
   systemPrompt: string;
   welcomeMessage: string;
+  welcomeMessageEnabled?: boolean;
   services: string[];
   workingHours: string;
   phonePlaceholder: string;

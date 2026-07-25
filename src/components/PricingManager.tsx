@@ -831,7 +831,7 @@ export default function PricingManager({
                 )}
               </div>
             </div>
-          );
+  );
         })}
       </div>
       )}
@@ -922,7 +922,7 @@ export default function PricingManager({
                           </div>
                         )}
                       </div>
-                    );
+  );
                   })()}
 
                   <div className="grid grid-cols-2 gap-3 pt-2 text-[11px] text-slate-400">
@@ -1002,7 +1002,7 @@ export default function PricingManager({
                               </span>
                             </div>
                           </div>
-                        );
+  );
                       })}
                   </div>
                 )}
@@ -1196,7 +1196,7 @@ export default function PricingManager({
                           </div>
                         )}
                       </div>
-                    );
+  );
                   })()}
 
                   {/* Quick Actions Panel */}
@@ -1339,7 +1339,7 @@ export default function PricingManager({
                             )}
                           </div>
                         </div>
-                      );
+  );
                     })}
                   </div>
                 )}
@@ -1412,7 +1412,7 @@ export default function PricingManager({
                             )}
                           </div>
                         </div>
-                      );
+  );
                     })}
                   </div>
                 )}

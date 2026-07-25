@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Bot,
   LayoutDashboard,
@@ -439,26 +440,51 @@ function App() {
   ];
 
   const renderContent = () => {
+    let content;
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardOverview bookings={visibleBookings} complaints={visibleComplaints} webhookLogs={webhookLogs} onNavigate={setActiveTab} onReset={handleResetSimulator} isResetting={isResetting} user={user} />;
+        content = <DashboardOverview bookings={visibleBookings} complaints={visibleComplaints} webhookLogs={webhookLogs} onNavigate={setActiveTab} onReset={handleResetSimulator} isResetting={isResetting} user={user} />;
+        break;
       case 'config':
-        return <ClientConfigurator businesses={businesses} webhookLogs={webhookLogs} onUpdateBusiness={handleUpdateBusiness} onCreateBusiness={handleCreateBusiness} onDeleteBusiness={handleDeleteBusiness} currentUser={user!} />;
+        content = <ClientConfigurator businesses={businesses} webhookLogs={webhookLogs} onUpdateBusiness={handleUpdateBusiness} onCreateBusiness={handleCreateBusiness} onDeleteBusiness={handleDeleteBusiness} currentUser={user!} />;
+        break;
       case 'profile':
-        return <UserProfile user={user!} business={activeBusiness} />;
+        content = <UserProfile user={user!} business={activeBusiness} />;
+        break;
       case 'bookings':
-        return <BookingsManager bookings={visibleBookings} businesses={businesses} plans={plans} onManageBooking={handleManageBooking} currentUser={user!} />;
+        content = <BookingsManager bookings={visibleBookings} businesses={businesses} plans={plans} onManageBooking={handleManageBooking} currentUser={user!} />;
+        break;
       case 'complaints':
-        return <ComplaintsDesk complaints={visibleComplaints} businesses={businesses} onManageComplaint={handleManageComplaint} currentUser={user!} />;
+        content = <ComplaintsDesk complaints={visibleComplaints} businesses={businesses} onManageComplaint={handleManageComplaint} currentUser={user!} />;
+        break;
       case 'simulator':
-        return <SandboxSimulator businesses={businesses} onTriggerSimulation={handleTriggerSimulation} onRefreshData={fetchState} />;
+        content = <SandboxSimulator businesses={businesses} onTriggerSimulation={handleTriggerSimulation} onRefreshData={fetchState} />;
+        break;
       case 'integrations':
-        return <IntegrationHub businesses={businesses} plans={plans} currentUser={user} />;
+        content = <IntegrationHub businesses={businesses} plans={plans} currentUser={user} />;
+        break;
       case 'pricing':
-        return <PricingManager businesses={businesses} onUpdateSubscription={handleUpdateSubscription} user={user!} />;
+        content = <PricingManager businesses={businesses} onUpdateSubscription={handleUpdateSubscription} user={user!} />;
+        break;
       default:
-        return <DashboardOverview bookings={visibleBookings} complaints={visibleComplaints} webhookLogs={webhookLogs} onNavigate={setActiveTab} onReset={handleResetSimulator} isResetting={isResetting} user={user} />;
+        content = <DashboardOverview bookings={visibleBookings} complaints={visibleComplaints} webhookLogs={webhookLogs} onNavigate={setActiveTab} onReset={handleResetSimulator} isResetting={isResetting} user={user} />;
+        break;
     }
+    
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+          className="h-full"
+        >
+          {content}
+        </motion.div>
+      </AnimatePresence>
+    );
   };
 
   return (

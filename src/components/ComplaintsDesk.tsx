@@ -58,7 +58,7 @@ export default function ComplaintsDesk({
 
   if (isLocked) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center animate-fade-in p-8 bg-slate-900/20 border border-slate-900 rounded-3xl" dir="rtl">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center animate-fade-in p-8 bg-slate-900/20 border border-slate-900 rounded-3xl" dir="rtl">
         <div className="relative">
           <div className="absolute inset-0 bg-amber-500 blur-3xl opacity-10 animate-pulse" />
           <div className="relative w-20 h-20 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-center shadow-2xl">
@@ -86,7 +86,7 @@ export default function ComplaintsDesk({
           ترقية الاشتراك للباقة الشاملة الآن
         </button>
       </div>
-    );
+  );
   }
 
   const getBizName = (id: string) => {
@@ -421,12 +421,34 @@ export default function ComplaintsDesk({
                       </span>
                       
                       {editingResponseId === c.id ? (
-                        <textarea 
-                          value={editedDraftText}
-                          onChange={(e) => setEditedDraftText(e.target.value)}
-                          rows={4}
-                          className="w-full bg-slate-950 border border-emerald-500 rounded-lg p-2.5 text-xs text-slate-100 outline-none leading-relaxed resize-none"
-                        />
+                        <div className="space-y-2">
+                          <textarea 
+                            value={editedDraftText}
+                            onChange={(e) => setEditedDraftText(e.target.value)}
+                            rows={4}
+                            className="w-full bg-slate-950 border border-emerald-500 rounded-lg p-2.5 text-xs text-slate-100 outline-none leading-relaxed resize-none"
+                          />
+                          <div className="flex flex-wrap gap-1.5">
+                            <button
+                              onClick={() => setEditedDraftText("نعتذر بشدة عن هذه التجربة غير المرضية، سيتم التواصل معك فوراً لحل المشكلة.")}
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] cursor-pointer transition-colors"
+                            >
+                              اعتذار وتواصل
+                            </button>
+                            <button
+                              onClick={() => setEditedDraftText("شكراً لملاحظاتك، لقد قمنا بتحويل الشكوى للإدارة وسيتم تعويضك في زيارتك القادمة.")}
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] cursor-pointer transition-colors"
+                            >
+                              تعويض
+                            </button>
+                            <button
+                              onClick={() => setEditedDraftText("نعتذر عن التأخير، نرجو تزويدنا برقم الطلب للتحقق من الأمر فوراً.")}
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] cursor-pointer transition-colors"
+                            >
+                              طلب بيانات
+                            </button>
+                          </div>
+                        </div>
                       ) : (
                         <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
                           {c.aiResponseDraft}

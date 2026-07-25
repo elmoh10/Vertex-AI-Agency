@@ -745,7 +745,7 @@ app.post("/api/payment/reject", (req, res) => {
 
 // Update Business Configuration
 app.post("/api/business/update", (req, res) => {
-  const { id, name, systemPrompt, welcomeMessage, services, workingHours, quickReplies, googleSheetsId, googleSheetsLinked, googleSheetsAccessToken, whatsappSenderNumber, instagramAccountId, instagramAccessToken, facebookPageId, facebookAccessToken, telegramBotToken } = req.body;
+  const { id, name, systemPrompt, welcomeMessage, services, workingHours, quickReplies, googleSheetsId, googleSheetsLinked, googleSheetsAccessToken, whatsappSenderNumber, instagramAccountId, instagramAccessToken, facebookPageId, facebookAccessToken, telegramBotToken, welcomeMessageEnabled, autoPilotEnabled, generateInvoiceEnabled } = req.body;
   const index = businesses.findIndex(b => b.id === id);
   if (index !== -1) {
     businesses[index] = {
@@ -753,6 +753,9 @@ app.post("/api/business/update", (req, res) => {
       name: name || businesses[index].name,
       systemPrompt: systemPrompt || businesses[index].systemPrompt,
       welcomeMessage: welcomeMessage || businesses[index].welcomeMessage,
+      welcomeMessageEnabled: welcomeMessageEnabled !== undefined ? welcomeMessageEnabled : businesses[index].welcomeMessageEnabled,
+      autoPilotEnabled: autoPilotEnabled !== undefined ? autoPilotEnabled : businesses[index].autoPilotEnabled,
+      generateInvoiceEnabled: generateInvoiceEnabled !== undefined ? generateInvoiceEnabled : businesses[index].generateInvoiceEnabled,
       services: services || businesses[index].services,
       workingHours: workingHours || businesses[index].workingHours,
       quickReplies: quickReplies !== undefined ? quickReplies : businesses[index].quickReplies,
@@ -1224,6 +1227,12 @@ app.post("/api/reset", (req, res) => {
 // Real-time AI simulation engine endpoint
 
 async function processAgentInteraction(biz, message, channel, senderName, senderPhone) {
+  let isFirstContact = false;
+  const customerKey = `${biz.id}_${channel}_${senderPhone}`;
+  if (!knownCustomers.has(customerKey)) {
+    knownCustomers.add(customerKey);
+    isFirstContact = true;
+  }
   try {
     const systemPrompt = `
 You are the AI Automation Core for a customer service agency representing: "${biz.name}".
