@@ -284,16 +284,29 @@ function App() {
       complaint: Complaint; 
       fullAIResult: any; 
   }> => {
-    return {
-        success: true,
-        responseText: 'Hello!',
+    try {
+      const response = await fetch('/api/simulate-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId, message, channel, senderName, senderPhone })
+      });
+      if (!response.ok) {
+        throw new Error('Simulation failed');
+      }
+      return await response.json();
+    } catch (e) {
+      console.error('Error triggering simulation:', e);
+      return {
+        success: false,
+        responseText: 'عذراً، حدث خطأ أثناء الاتصال بالمحاكي.',
         actionDetected: false,
         actionType: '',
         actionDetailsText: '',
         booking: {} as Booking,
         complaint: {} as Complaint,
         fullAIResult: {}
-    };
+      };
+    }
   };
 
   const handleCreateBusiness = async (name: string, type: string) => {
