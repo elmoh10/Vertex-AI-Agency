@@ -489,7 +489,7 @@ export default function SandboxSimulator({
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-purple-400 font-bold flex items-center gap-1 font-sans">
                     <span className="w-1.5 h-1.5 bg-purple-400 rounded-full" />
-                    2. معالجة وتفكيك المضمون بـ Gemini 3.6-Flash
+                    2. معالجة وتفكيك المضمون بـ Gemini 3.5-Flash
                   </span>
                 </div>
                 <div className="bg-slate-950 border border-slate-850 rounded-lg p-3 text-[10px] max-h-40 overflow-y-auto text-slate-400 custom-scrollbar">
