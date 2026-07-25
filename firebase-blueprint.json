@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Business": {
+      "title": "Business",
+      "description": "Business configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "whatsappSenderNumber": { "type": "string" }
+      }
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Customer booking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "businessId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "Complaint": {
+      "title": "Complaint",
+      "description": "Customer complaint",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "businessId": { "type": "string" },
+        "customerName": { "type": "string" }
+      }
+    },
+    "WebhookLog": {
+      "title": "WebhookLog",
+      "description": "System log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "businessId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "businesses": {
+      "schema": "Business",
+      "description": "Businesses"
+    },
+    "bookings": {
+      "schema": "Booking",
+      "description": "Bookings"
+    },
+    "complaints": {
+      "schema": "Complaint",
+      "description": "Complaints"
+    },
+    "webhook_logs": {
+      "schema": "WebhookLog",
+      "description": "Webhook Logs"
+    }
+  }
+}

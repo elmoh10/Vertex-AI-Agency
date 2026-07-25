@@ -1,0 +1,6 @@
+{
+  "name": "Vertex AI Agency",
+  "description": "منصة متكاملة لأتمتة خدمة العملاء وحجز المواعيد وإدارة الشكاوى للعيادات والمطاعم والكافيهات باستخدام الذكاء الاصطناعي عبر واتساب وإنستجرام.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
