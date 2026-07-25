@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  MessageSquareWarning, 
+  MessageSquareWarning, MessageCircle, Clock, ChevronDown, ChevronUp, 
   User, 
   Phone, 
   Calendar, 
@@ -22,6 +22,7 @@ import {
 import { Complaint, BusinessConfig } from '../types';
 
 interface ComplaintsDeskProps {
+  chatMessages?: any[];
   complaints: Complaint[];
   businesses: BusinessConfig[];
   onManageComplaint: (id: string, action: 'resolve' | 'review' | 'update', updates?: any) => Promise<boolean>;
@@ -42,6 +43,7 @@ const DEFAULT_CATEGORIES = [
 export default function ComplaintsDesk({ 
   complaints, 
   businesses, 
+  chatMessages = [], 
   onManageComplaint,
   currentUser
 }: ComplaintsDeskProps) {
@@ -55,6 +57,7 @@ export default function ComplaintsDesk({
   const [editingResponseId, setEditingResponseId] = useState<string | null>(null);
   const [editedDraftText, setEditedDraftText] = useState<string>('');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [expandedChats, setExpandedChats] = useState<Record<string, boolean>>({});
 
   if (isLocked) {
     return (
@@ -401,15 +404,29 @@ export default function ComplaintsDesk({
                   </div>
 
                   {/* Col 2: Text Description & Raw Log */}
-                  <div className="lg:col-span-1 space-y-2">
-                    <span className="text-xs text-slate-500 font-bold block">مضمون الشكوى المسجل:</span>
-                    <div className="p-4 bg-slate-950 rounded-xl border border-slate-850 text-xs text-slate-200 leading-relaxed font-sans italic">
-                      &ldquo;{c.summary}&rdquo;
+                  <div className="lg:col-span-1 space-y-2 flex flex-col justify-between h-full">
+                    <div className="space-y-2">
+                      <span className="text-xs text-slate-500 font-bold block">مضمون الشكوى المسجل:</span>
+                      <div className="p-4 bg-slate-950 rounded-xl border border-slate-850 text-xs text-slate-200 leading-relaxed font-sans italic">
+                        &ldquo;{c.summary}&rdquo;
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono block flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        رصدت في: {new Date(c.createdAt).toLocaleString('ar-SA')}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-mono block flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      رصدت في: {new Date(c.createdAt).toLocaleString('ar-SA')}
-                    </span>
+                    <div className="pt-2">
+                      <button
+                        onClick={() => setExpandedChats(prev => ({ ...prev, [c.id]: !prev[c.id] }))}
+                        className="w-full flex items-center justify-between px-3 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 text-slate-300 text-[11px] font-bold rounded-lg transition-all"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                          عرض سجل المحادثة الكامل
+                        </span>
+                        {expandedChats[c.id] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Col 3: AI response automation draft preview */}

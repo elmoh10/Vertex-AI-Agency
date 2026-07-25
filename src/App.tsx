@@ -17,7 +17,8 @@ import {
   BellOff,
   CreditCard,
   AlertCircle,
-  User
+  User,
+  Users
 } from 'lucide-react';
 
 // Components
@@ -29,6 +30,7 @@ import SandboxSimulator from './components/SandboxSimulator';
 import IntegrationHub from './components/IntegrationHub';
 import PricingManager from './components/PricingManager';
 import UserProfile from './components/UserProfile';
+import CRMManager from './components/CRMManager';
 import OnboardingTour from './components/OnboardingTour';
 
 import { BusinessConfig, Booking, Complaint, WebhookLog, Plan } from './types';
@@ -36,6 +38,8 @@ function App() {
   const [businesses, setBusinesses] = useState<BusinessConfig[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
 
@@ -435,6 +439,7 @@ function App() {
 
   const navItems = [
     { id: 'dashboard', label: 'نظرة عامة', icon: LayoutDashboard },
+    { id: 'crm', label: 'العملاء (CRM)', icon: Users },
     { id: 'config', label: 'تهيئة العملاء', icon: Settings },
     { id: 'bookings', label: 'إدارة الحجوزات', icon: Calendar },
     ...(hasComplaints ? [{ id: 'complaints', label: 'مكتب الشكاوى', icon: MessageSquareWarning }] : []),
@@ -450,6 +455,9 @@ function App() {
       case 'dashboard':
         content = <DashboardOverview bookings={visibleBookings} complaints={visibleComplaints} webhookLogs={webhookLogs} onNavigate={setActiveTab} onReset={handleResetSimulator} isResetting={isResetting} user={user} />;
         break;
+      
+      case 'crm':
+        return <CRMManager customers={customers} businesses={businesses} userRole={user?.role} />;
       case 'config':
         content = <ClientConfigurator businesses={businesses} webhookLogs={webhookLogs} onUpdateBusiness={handleUpdateBusiness} onCreateBusiness={handleCreateBusiness} onDeleteBusiness={handleDeleteBusiness} currentUser={user!} />;
         break;
@@ -460,7 +468,7 @@ function App() {
         content = <BookingsManager bookings={visibleBookings} businesses={businesses} plans={plans} onManageBooking={handleManageBooking} currentUser={user!} />;
         break;
       case 'complaints':
-        content = <ComplaintsDesk complaints={visibleComplaints} businesses={businesses} onManageComplaint={handleManageComplaint} currentUser={user!} />;
+        content = <ComplaintsDesk complaints={visibleComplaints} businesses={businesses} chatMessages={chatMessages} onManageComplaint={handleManageComplaint} currentUser={user!} />;
         break;
       case 'simulator':
         content = <SandboxSimulator businesses={businesses} onTriggerSimulation={handleTriggerSimulation} onRefreshData={fetchState} />;

@@ -82,6 +82,8 @@ export interface WebhookLog {
 
 export interface ChatMessage {
   id: string;
+  businessId?: string;
+  customerPhone?: string;
   sender: 'customer' | 'agent' | 'system';
   text: string;
   timestamp: string;
@@ -114,4 +116,17 @@ export interface ActivationCode {
   createdAt: string;
   usedAt?: string;
   usedBy?: string;
+}
+
+export interface Customer {
+  id: string;
+  businessId: string;
+  name: string;
+  phone: string;
+  email?: string;
+  totalBookings: number;
+  totalComplaints: number;
+  lastInteraction: string;
+  tags: string[];
+  notes?: string;
 }

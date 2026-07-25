@@ -169,6 +169,7 @@ let complaints: Complaint[] = [
   }
 ];
 
+let chatMessages: ChatMessage[] = [];
 let webhookLogs: WebhookLog[] = [
   {
     id: "l_init_wa_clinic",
@@ -534,6 +535,30 @@ interface PaymentRequest {
   transactionProof?: string;
 }
 
+
+let customers: any[] = [
+  {
+    id: "cust_1",
+    businessId: "clinic_1",
+    name: "عبدالرحمن بن سعود",
+    phone: "0501234567",
+    totalBookings: 1,
+    totalComplaints: 0,
+    lastInteraction: "2026-07-15T14:30:00Z",
+    tags: ["عميل جديد"]
+  },
+  {
+    id: "cust_2",
+    businessId: "restaurant_1",
+    name: "سارة الأحمد",
+    phone: "0559876543",
+    totalBookings: 1,
+    totalComplaints: 0,
+    lastInteraction: "2026-07-15T18:22:00Z",
+    tags: ["عائلة"]
+  }
+];
+
 let paymentRequests: PaymentRequest[] = [
   {
     id: "pay_1",
@@ -562,6 +587,7 @@ app.get("/api/state", (req, res) => {
     const filteredBookings = bookings.filter(b => b.businessId === businessId);
     const filteredComplaints = complaints.filter(c => c.businessId === businessId);
     const filteredWebhookLogs = webhookLogs.filter(l => l.businessId === businessId || !l.businessId);
+    const filteredChatMessages = chatMessages.filter(m => m.businessId === businessId);
     const filteredPaymentRequests = paymentRequests.filter(p => p.businessId === businessId);
     
     return res.json({
@@ -569,6 +595,9 @@ app.get("/api/state", (req, res) => {
       bookings: filteredBookings,
       complaints: filteredComplaints,
       webhookLogs: filteredWebhookLogs,
+      chatMessages: filteredChatMessages,
+      customers: customers.filter(c => c.businessId === businessId),
+
       paymentRequests: filteredPaymentRequests
     });
   }
@@ -1094,7 +1123,18 @@ app.post("/api/bookings/manage", (req, res) => {
   if (index !== -1) {
     if (action === "confirm") bookings[index].status = "confirmed";
     else if (action === "cancel") bookings[index].status = "cancelled";
-    else if (action === "complete") bookings[index].status = "completed";
+    else if (action === "complete") {
+      bookings[index].status = "completed";
+      
+      // إرسال رسالة شكر وتقييم للعميل
+      const message = `شكراً لزيارتك لـ ${businesses.find(b => b.id === bookings[index].businessId)?.name || 'منشأتنا'} يا ${bookings[index].customerName}. نتمنى أن تكون الخدمة قد نالت إعجابك! نرجو منك تقييم تجربتك عبر الرابط التالي لمساعدتنا على تحسين جودة خدماتنا.`;
+      
+      logWebhook("outgoing", "whatsapp", `إرسال رسالة شكر وتقييم للعميل: ${bookings[index].customerName}`, { 
+        bookingId: id,
+        customerPhone: bookings[index].customerPhone,
+        message: message 
+      }, bookings[index].businessId, "success");
+    }
     else if (action === "remind") {
       bookings[index].reminderSent = true;
       logWebhook("system", "whatsapp", `تم إرسال رسالة تذكير للعميل: ${bookings[index].customerName} بموعده`, { bookingId: id }, bookings[index].businessId, "success");
@@ -1224,7 +1264,7 @@ app.post("/api/reset", (req, res) => {
     }
   ];
 
-  res.json({ success: true, bookings, complaints, webhookLogs });
+  res.json({ success: true, bookings, complaints, webhookLogs, chatMessages });
 });
 
 // Real-time AI simulation engine endpoint
@@ -1236,6 +1276,33 @@ async function processAgentInteraction(biz, message, channel, senderName, sender
     knownCustomers.add(customerKey);
     isFirstContact = true;
   }
+  
+  // CRM Logic
+  let customerIndex = customers.findIndex(c => c.phone === senderPhone && c.businessId === biz.id);
+  if (customerIndex === -1) {
+    customers.push({
+      id: "cust_" + Math.random().toString(36).substr(2, 9),
+      businessId: biz.id,
+      name: senderName || "عميل غير معروف",
+      phone: senderPhone,
+      totalBookings: 0,
+      totalComplaints: 0,
+      lastInteraction: new Date().toISOString(),
+      tags: ["عميل جديد"]
+    });
+  } else {
+    customers[customerIndex].lastInteraction = new Date().toISOString();
+  }
+  // Record incoming message
+  chatMessages.push({
+    id: "msg_" + Math.random().toString(36).substr(2, 9),
+    businessId: biz.id,
+    customerPhone: senderPhone,
+    sender: "customer",
+    text: message,
+    timestamp: new Date().toISOString()
+  });
+
   try {
     const systemPrompt = `
 You are the AI Automation Core for a customer service agency representing: "${biz.name}".
@@ -1330,6 +1397,11 @@ ${(biz.type === 'clinic' || biz.type === 'restaurant') && biz.generateInvoiceEna
         };
         bookings.unshift(bookingCreated);
         actionDetailsText = `📅 حجز ملقط تلقائياً: ${bookingCreated.service} بتاريخ ${bookingCreated.date} في تمام الساعة ${bookingCreated.time}`;
+        
+        let cIdx = customers.findIndex(c => c.phone === bookingCreated.customerPhone && c.businessId === biz.id);
+        if (cIdx !== -1) {
+          customers[cIdx].totalBookings += 1;
+        }
         
         if (biz.googleSheetsLinked && biz.googleSheetsId && biz.googleSheetsAccessToken) {
           appendBookingToSheet(biz.googleSheetsAccessToken, biz.googleSheetsId, bookingCreated);
@@ -1601,6 +1673,29 @@ app.post("/api/webhooks/telegram/:businessId", async (req, res) => {
   }
 });
 
+
+app.get("/api/webhooks/facebook", (req, res) => {
+  const verifyToken = "VERTEX_AI_AGENCY_TOKEN_2026";
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  if (mode && token) {
+    if (mode === "subscribe" && token === verifyToken) {
+      logWebhook("system", "facebook", "طلب تفعيل Webhook من Meta لفيسبوك (ناجح)", { query: req.query });
+      return res.status(200).send(challenge);
+    }
+    return res.status(403).send("Verification token mismatch");
+  }
+  res.status(400).send("Bad Request");
+});
+
+app.post("/api/webhooks/facebook", async (req, res) => {
+  const body = req.body;
+  logWebhook("incoming", "facebook", "رسالة واردة عبر ماسنجر (تجريبي)", { body });
+  res.status(200).send("EVENT_RECEIVED");
+});
+
 app.get("/api/webhooks/instagram", (req, res) => {
   const verifyToken = "VERTEX_AI_AGENCY_TOKEN_2026";
   const mode = req.query["hub.mode"];
@@ -1616,6 +1711,13 @@ app.get("/api/webhooks/instagram", (req, res) => {
   }
   res.status(400).send("Bad Request");
 });
+
+app.post("/api/webhooks/instagram", async (req, res) => {
+  const body = req.body;
+  logWebhook("incoming", "instagram", "رسالة واردة عبر انستجرام (تجريبي)", { body });
+  res.status(200).send("EVENT_RECEIVED");
+});
+
 
 // Periodic Reminder Check
 setInterval(() => {
