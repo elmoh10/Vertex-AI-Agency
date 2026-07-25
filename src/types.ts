@@ -29,6 +29,7 @@ export interface BusinessConfig {
   telegramBotToken?: string;
   telegramLinked?: boolean;
   autoPilotEnabled?: boolean;
+  generateInvoiceEnabled?: boolean;
 }
 
 export interface QuickReply {

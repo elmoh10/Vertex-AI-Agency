@@ -1247,6 +1247,9 @@ If the customer wants to book a slot or service, detect it as "BOOKING", extract
 If the customer expresses severe dissatisfaction, trouble, or files a formal feedback, classify it as "COMPLAINT", estimate the sentiment ("negative") and summarize it.
 Otherwise, classify it as "FAQ" or "OTHER" and answer appropriately.
 Keep your Arabic conversational response 'responseText' friendly, highly localized, and matching the style of ${biz.name}.
+${(biz.type === 'clinic' || biz.type === 'restaurant') && biz.generateInvoiceEnabled 
+  ? `CRITICAL: The Automatic Invoice feature is ENABLED. If this is a successful BOOKING, you MUST include a clean, text-based invoice/receipt (فاتورة/إيصال) at the end of your 'responseText'. The invoice should look like a real receipt with dashes, including the Business Name, Customer Name, Service, Date, Time, and a placeholder for Price/Total (e.g. 0.00 SAR). Make it look professional.` 
+  : ''}
     `;
 
     const responseSchema = {

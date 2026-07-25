@@ -4,7 +4,8 @@ import {
   Settings2, 
   Plus, 
   Trash2, 
-  Sparkles, 
+  Sparkles,
+  Receipt, 
   Info,
   Clock,
   Phone,
@@ -107,6 +108,7 @@ export default function ClientConfigurator({
   const [facebookAccessToken, setFacebookAccessToken] = useState('');
   const [telegramBotToken, setTelegramBotToken] = useState('');
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(false);
+  const [generateInvoiceEnabled, setGenerateInvoiceEnabled] = useState(false);
 
   const [isLinkingSheets, setIsLinkingSheets] = useState(false);
   const [sheetsError, setSheetsError] = useState('');
@@ -141,6 +143,7 @@ export default function ClientConfigurator({
         setFacebookAccessToken(biz.facebookAccessToken || '');
         setTelegramBotToken(biz.telegramBotToken || '');
         setAutoPilotEnabled(biz.autoPilotEnabled || false);
+        setGenerateInvoiceEnabled(biz.generateInvoiceEnabled || false);
         setSaveStatus('idle');
         setSheetsError('');
         setSheetsSuccessMsg('');
@@ -360,7 +363,8 @@ export default function ClientConfigurator({
       facebookPageId,
       facebookAccessToken,
       telegramBotToken,
-      autoPilotEnabled
+      autoPilotEnabled,
+      generateInvoiceEnabled
     };
 
     const success = await onUpdateBusiness(updatedConfig);
@@ -754,6 +758,29 @@ export default function ClientConfigurator({
                 </button>
               </div>
             </div>
+            {/* Automatic Invoice Generation (Clinics & Restaurants only) */}
+            {(currentBiz.type === 'clinic' || currentBiz.type === 'restaurant') && (
+              <div className="border-t border-slate-800/80 pt-6 space-y-4">
+                <div className="flex items-center justify-between p-4 bg-slate-950 rounded-xl border border-slate-800">
+                  <div className="space-y-1 pr-4 max-w-lg">
+                    <div className="flex items-center gap-2">
+                      <Receipt className="w-4 h-4 text-emerald-400" />
+                      <span className="text-sm font-bold text-slate-200">إصدار فاتورة تلقائية للعميل</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      عند التفعيل، سيقوم الذكاء الاصطناعي بإنشاء فاتورة نصية تلقائية وإرسالها للعميل فور إتمام عملية الحجز أو بعد تنفيذ الخدمة.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setGenerateInvoiceEnabled(!generateInvoiceEnabled)}
+                    className={`w-12 h-6 rounded-full p-1 transition-all flex items-center ${generateInvoiceEnabled ? 'bg-emerald-500 justify-end' : 'bg-slate-700 justify-start'}`}
+                  >
+                    <div className="w-4 h-4 bg-white rounded-full" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Social Media Integration Section */}
             <div className="border-t border-slate-800/80 pt-6 space-y-4">
