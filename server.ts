@@ -1108,7 +1108,21 @@ app.post("/api/bookings/manage", (req, res) => {
     bookings.unshift(newBooking);
 
     // Simulate sending automatic reminder upon creation
-    logWebhook("system", "whatsapp", `تم إرسال رسالة تأكيد وتذكير تلقائي للعميل: ${newBooking.customerName}`, { bookingId: newBooking.id }, newBooking.businessId, "success");
+    let confirmMsg = `تم حجز موعدك بنجاح يا ${newBooking.customerName} في ${biz?.name || 'منشأتنا'}.`;
+    if (biz && biz.generateInvoiceEnabled) {
+      confirmMsg += `\n\n=== فاتورة إلكترونية ===\nرقم الحجز: ${newBooking.id}\nالخدمة: ${newBooking.service}\nالعميل: ${newBooking.customerName}\nالتاريخ: ${newBooking.date}\nالوقت: ${newBooking.time}\nالقيمة الإجمالية: (تُحدد من قبل المركز)\n====================`;
+    }
+    
+    logWebhook("system", "whatsapp", `تم إرسال رسالة تأكيد وفاتورة تلقائية للعميل: ${newBooking.customerName}`, { bookingId: newBooking.id, message: confirmMsg }, newBooking.businessId, "success");
+    
+    chatMessages.push({
+      id: "msg_" + Math.random().toString(36).substr(2, 9),
+      businessId: newBooking.businessId,
+      customerPhone: newBooking.customerPhone,
+      sender: "system",
+      text: confirmMsg,
+      timestamp: new Date().toISOString()
+    });
 
     // Sync to Google Sheets if linked
     if (biz && biz.googleSheetsLinked && biz.googleSheetsId && biz.googleSheetsAccessToken) {
@@ -1121,19 +1135,64 @@ app.post("/api/bookings/manage", (req, res) => {
 
   const index = bookings.findIndex(b => b.id === id);
   if (index !== -1) {
-    if (action === "confirm") bookings[index].status = "confirmed";
-    else if (action === "cancel") bookings[index].status = "cancelled";
-    else if (action === "complete") {
-      bookings[index].status = "completed";
+    if (action === "confirm") {
+      bookings[index].status = "confirmed";
+      const biz = businesses.find(b => b.id === bookings[index].businessId);
       
-      // إرسال رسالة شكر وتقييم للعميل
-      const message = `شكراً لزيارتك لـ ${businesses.find(b => b.id === bookings[index].businessId)?.name || 'منشأتنا'} يا ${bookings[index].customerName}. نتمنى أن تكون الخدمة قد نالت إعجابك! نرجو منك تقييم تجربتك عبر الرابط التالي لمساعدتنا على تحسين جودة خدماتنا.`;
+      let message = `تم تأكيد حجزك بنجاح يا ${bookings[index].customerName} في ${biz?.name || 'منشأتنا'}.`;
+      if (biz && biz.generateInvoiceEnabled) {
+        message += `\n\n=== فاتورة إلكترونية ===\nرقم الحجز: ${bookings[index].id}\nالخدمة: ${bookings[index].service}\nالعميل: ${bookings[index].customerName}\nالتاريخ: ${bookings[index].date}\nالوقت: ${bookings[index].time}\nالقيمة الإجمالية: (تُحدد من قبل المركز)\n====================`;
+      }
       
-      logWebhook("outgoing", "whatsapp", `إرسال رسالة شكر وتقييم للعميل: ${bookings[index].customerName}`, { 
+      logWebhook("outgoing", "whatsapp", `إرسال تأكيد الحجز (وفاتورة) للعميل: ${bookings[index].customerName}`, { 
         bookingId: id,
         customerPhone: bookings[index].customerPhone,
         message: message 
       }, bookings[index].businessId, "success");
+      
+      chatMessages.push({
+        id: "msg_" + Math.random().toString(36).substr(2, 9),
+        businessId: bookings[index].businessId,
+        customerPhone: bookings[index].customerPhone,
+        sender: "system",
+        text: message,
+        timestamp: new Date().toISOString()
+      });
+    }
+    else if (action === "cancel") bookings[index].status = "cancelled";
+    else if (action === "complete") {
+      bookings[index].status = "completed";
+      
+      const biz = businesses.find(b => b.id === bookings[index].businessId);
+      let message = `شكراً لزيارتك لـ ${biz?.name || 'منشأتنا'} يا ${bookings[index].customerName}. نتمنى أن تكون الخدمة قد نالت إعجابك! نرجو منك تقييم تجربتك عبر الرابط التالي لمساعدتنا على تحسين جودة خدماتنا.`;
+      
+      if (biz && biz.generateInvoiceEnabled) {
+        message += `\n\n=== فاتورة إلكترونية ===\nرقم الحجز: ${bookings[index].id}\nالخدمة: ${bookings[index].service}\nالعميل: ${bookings[index].customerName}\nالتاريخ: ${bookings[index].date}\nالوقت: ${bookings[index].time}\nالقيمة الإجمالية: (تُحدد من قبل المركز)\n====================`;
+      }
+      
+      // Find the last channel used by this customer
+      const customerMsgs = chatMessages.filter(m => m.businessId === bookings[index].businessId && m.customerPhone === bookings[index].customerPhone);
+      let channel: 'whatsapp' | 'instagram' | 'facebook' | 'telegram' | 'webhook_verification' | 'billing' = "whatsapp";
+      // Let's check webhook logs instead for the channel
+      const customerLogs = webhookLogs.filter(l => l.businessId === bookings[index].businessId && l.payload && l.payload.customerPhone === bookings[index].customerPhone);
+      if (customerLogs.length > 0) {
+        channel = customerLogs[customerLogs.length - 1].channel || "whatsapp";
+      }
+
+      logWebhook("outgoing", channel, `إرسال رسالة شكر وفاتورة للعميل: ${bookings[index].customerName}`, { 
+        bookingId: id,
+        customerPhone: bookings[index].customerPhone,
+        message: message 
+      }, bookings[index].businessId, "success");
+      
+      chatMessages.push({
+        id: "msg_" + Math.random().toString(36).substr(2, 9),
+        businessId: bookings[index].businessId,
+        customerPhone: bookings[index].customerPhone,
+        sender: "system",
+        text: message,
+        timestamp: new Date().toISOString()
+      });
     }
     else if (action === "remind") {
       bookings[index].reminderSent = true;
@@ -1328,7 +1387,7 @@ If the customer expresses severe dissatisfaction, trouble, or files a formal fee
 If the customer explicitly requests to speak with a human agent, or if there is an absolute necessity where the AI cannot fulfill the request, classify it as "HUMAN_HANDOFF".
 Otherwise, classify it as "FAQ" or "OTHER" and answer appropriately.
 Keep your Arabic conversational response 'responseText' friendly, highly localized, and matching the style of ${biz.name}.
-${(biz.type === 'clinic' || biz.type === 'restaurant') && biz.generateInvoiceEnabled 
+${biz.generateInvoiceEnabled 
   ? `CRITICAL: The Automatic Invoice feature is ENABLED. If this is a successful BOOKING, you MUST include a clean, text-based invoice/receipt (فاتورة/إيصال) at the end of your 'responseText'. The invoice should look like a real receipt with dashes, including the Business Name, Customer Name, Service, Date, Time, and a placeholder for Price/Total (e.g. 0.00 SAR). Make it look professional.` 
   : ''}
     `;
@@ -1692,8 +1751,49 @@ app.get("/api/webhooks/facebook", (req, res) => {
 
 app.post("/api/webhooks/facebook", async (req, res) => {
   const body = req.body;
-  logWebhook("incoming", "facebook", "رسالة واردة عبر ماسنجر (تجريبي)", { body });
   res.status(200).send("EVENT_RECEIVED");
+  
+  try {
+    if (body.object === "page" && body.entry) {
+      for (const entry of body.entry) {
+        const pageId = entry.id;
+        const biz = businesses.find(b => b.facebookPageId === pageId) || businesses[0];
+        
+        if (!biz) continue;
+
+        if (entry.messaging) {
+          for (const event of entry.messaging) {
+            if (event.message && event.message.text) {
+              const text = event.message.text;
+              const senderId = event.sender.id;
+              
+              logWebhook("incoming", "facebook", `رسالة فيسبوك ماسنجر من ${senderId}: "${text}"`, body, biz.id, "success");
+              
+              const result = await processAgentInteraction(biz, text, "facebook", "عميل فيسبوك", senderId);
+              
+              if (biz.facebookAccessToken) {
+                await fetch(`https://graph.facebook.com/v21.0/me/messages?access_token=${biz.facebookAccessToken}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    recipient: { id: senderId },
+                    messaging_type: "RESPONSE",
+                    message: { text: result.responseText }
+                  })
+                });
+                logWebhook("outgoing", "facebook", `تم إرسال رد تلقائي إلى ${senderId} عبر ماسنجر`, { responseText: result.responseText }, biz.id, "success");
+              } else {
+                logWebhook("system", "facebook", "تم معالجة الرسالة ولكن facebookAccessToken غير متوفر لإرسال الرد الحقيقي", result, biz.id, "success");
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error processing Facebook webhook:", error);
+    logWebhook("system", "facebook", "خطأ أثناء معالجة ويبهوك فيسبوك", { error: String(error) }, null, "failed");
+  }
 });
 
 app.get("/api/webhooks/instagram", (req, res) => {
@@ -1714,8 +1814,50 @@ app.get("/api/webhooks/instagram", (req, res) => {
 
 app.post("/api/webhooks/instagram", async (req, res) => {
   const body = req.body;
-  logWebhook("incoming", "instagram", "رسالة واردة عبر انستجرام (تجريبي)", { body });
   res.status(200).send("EVENT_RECEIVED");
+
+  try {
+    if ((body.object === "instagram" || body.object === "page") && body.entry) {
+      for (const entry of body.entry) {
+        const accountId = entry.id; // Could be instagram account id or page id
+        const biz = businesses.find(b => b.instagramAccountId === accountId || b.facebookPageId === accountId) || businesses[0];
+        
+        if (!biz) continue;
+
+        if (entry.messaging) {
+          for (const event of entry.messaging) {
+            if (event.message && event.message.text) {
+              const text = event.message.text;
+              const senderId = event.sender.id;
+              
+              logWebhook("incoming", "instagram", `رسالة انستجرام من ${senderId}: "${text}"`, body, biz.id, "success");
+              
+              const result = await processAgentInteraction(biz, text, "instagram", "عميل انستجرام", senderId);
+              
+              if (biz.instagramAccessToken || biz.facebookAccessToken) {
+                const token = biz.instagramAccessToken || biz.facebookAccessToken;
+                await fetch(`https://graph.facebook.com/v21.0/me/messages?access_token=${token}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    recipient: { id: senderId },
+                    messaging_type: "RESPONSE",
+                    message: { text: result.responseText }
+                  })
+                });
+                logWebhook("outgoing", "instagram", `تم إرسال رد تلقائي إلى ${senderId} عبر انستجرام`, { responseText: result.responseText }, biz.id, "success");
+              } else {
+                logWebhook("system", "instagram", "تم معالجة الرسالة ولكن Access Token غير متوفر لإرسال الرد الحقيقي", result, biz.id, "success");
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error processing Instagram webhook:", error);
+    logWebhook("system", "instagram", "خطأ أثناء معالجة ويبهوك انستجرام", { error: String(error) }, null, "failed");
+  }
 });
 
 

@@ -21,12 +21,14 @@ import {
 import { BusinessConfig, Plan } from '../types';
 
 interface IntegrationHubProps {
+  webhookLogs?: any[];
+  chatMessages?: any[];
   businesses: BusinessConfig[];
   plans: Plan[];
   currentUser?: { role: 'owner' | 'supervisor'; businessId?: string };
 }
 
-export default function IntegrationHub({ businesses, plans, currentUser }: IntegrationHubProps) {  
+export default function IntegrationHub({ businesses, plans, currentUser, webhookLogs = [], chatMessages = [] }: IntegrationHubProps) {  
   const activeBiz = businesses.find(b => b.id === currentUser?.businessId);
   const currentPlan = activeBiz ? plans.find(p => p.id === activeBiz.subscriptionPlan) : undefined;  
   const maxChannels = currentPlan?.limits?.channels || 1;
@@ -40,9 +42,10 @@ export default function IntegrationHub({ businesses, plans, currentUser }: Integ
     telegram: 'idle'
   });
 
-  const [activeTab, setActiveTab] = useState<'webhooks' | 'workflows' | 'meta_api'>('webhooks');
+  const [activeTab, setActiveTab] = useState<'webhooks' | 'workflows' | 'meta_api' | 'advanced'>('webhooks');
   const [metaApiSettings, setMetaApiSettings] = useState({ phoneNumberId: '', accessToken: '' });
   const [isSavingMeta, setIsSavingMeta] = useState(false);
+  const [advancedSettings, setAdvancedSettings] = useState({ whatsappWebhookUrl: '', instagramWebhookUrl: '', debuggingEnabled: false });
   const [workflows, setWorkflows] = useState([
     { id: '1', trigger: 'intent_booking', action: 'google_sheets' },
     { id: '2', trigger: 'intent_complaint', action: 'send_email' }
@@ -180,6 +183,15 @@ app.listen(3000, () => console.log('Your production Vertex AI Agency Webhook is 
         >
           <Settings className="w-4 h-4" />
           إعدادات Meta API
+        </button>
+        <button
+          onClick={() => setActiveTab('advanced')}
+          className={`pb-3 text-sm font-bold transition-colors flex items-center gap-2 ${
+            activeTab === 'advanced' ? 'text-rose-400 border-b-2 border-rose-400' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Terminal className="w-4 h-4" />
+          إعدادات متقدمة
         </button>
       </div>
 

@@ -474,7 +474,7 @@ function App() {
         content = <SandboxSimulator businesses={businesses} onTriggerSimulation={handleTriggerSimulation} onRefreshData={fetchState} />;
         break;
       case 'integrations':
-        content = <IntegrationHub businesses={businesses} plans={plans} currentUser={user} />;
+        content = <IntegrationHub businesses={businesses} plans={plans} currentUser={user} webhookLogs={webhookLogs} chatMessages={chatMessages} />;
         break;
       case 'pricing':
         content = <PricingManager businesses={businesses} onUpdateSubscription={handleUpdateSubscription} user={user!} />;
