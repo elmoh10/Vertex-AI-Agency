@@ -73,6 +73,7 @@ export default function IntegrationHub({ businesses, plans, currentUser, webhook
   // Dynamic server url detection
   const serverBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://api.youragency.com';
   const whatsappWebhookUrl = `${serverBaseUrl}/api/webhooks/whatsapp`;
+  const wasenderWebhookUrl = `${serverBaseUrl}/api/webhooks/wasender?businessId=${currentUser?.businessId || ''}`;
   const instagramWebhookUrl = `${serverBaseUrl}/api/webhooks/instagram`;
   const facebookWebhookUrl = `${serverBaseUrl}/api/webhooks/facebook`;
   const telegramWebhookUrl = `${serverBaseUrl}/api/webhooks/telegram`;
@@ -300,7 +301,19 @@ app.listen(3000, () => console.log('Your production Vertex AI Agency Webhook is 
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-300">نهاية ويبهوك واتساب (WhatsApp Webhook)</span>
+                    <span className="font-bold text-slate-300 flex items-center gap-2">نهاية ويبهوك واتساب (WaSender API)</span>
+                    <button onClick={() => handleCopy(wasenderWebhookUrl, 'url')} className="text-[10px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 bg-slate-900 px-2.5 py-1 rounded border border-slate-800 cursor-pointer">
+                      {copiedText === 'url' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      نسخ الرابط
+                    </button>
+                  </div>
+                  <div className="p-3 bg-emerald-950/20 rounded border border-emerald-900/30 text-emerald-300 font-mono text-left truncate">{wasenderWebhookUrl}</div>
+                  <p className="text-[10px] text-slate-400">استخدم هذا الرابط في موقع wasenderapi.com وتأكد من إضافة API Access Token في إعدادات العميل.</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-300">نهاية ويبهوك واتساب الرسمي (Official WhatsApp API)</span>
                     <button onClick={() => handleCopy(whatsappWebhookUrl, 'url')} className="text-[10px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 bg-slate-900 px-2.5 py-1 rounded border border-slate-800 cursor-pointer">
                       {copiedText === 'url' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                       نسخ الرابط

@@ -10,7 +10,9 @@ export interface BusinessConfig {
   systemPrompt: string;
   welcomeMessage: string;
   welcomeMessageEnabled?: boolean;
-  services: string[];
+  services: { name: string; price: string }[];
+  wasenderAccessToken?: string;
+  wasenderWebhookSecret?: string;
   inventoryUrl?: string;
   inventoryType?: 'google_sheets' | 'excel';
   inventoryData?: any[];
