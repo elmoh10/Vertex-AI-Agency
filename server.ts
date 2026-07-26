@@ -48,7 +48,7 @@ let businesses: BusinessConfig[] = [
     iconName: "Stethoscope",
     systemPrompt: "أنت المساعد الذكي لعيادة الأسنان المتميزة. هدفك مساعدة المرضى في حجز مواعيد، والإجابة عن تساؤلاتهم بلباقة وسرعة، وتسجيل شكاويهم إن وجدت. المواعيد المتاحة يومياً من 1 ظهراً وحتى 9 مساءً. حافظ على الردود مختصرة واحترافية وبلهجة ودية جداً، وقدم المساعدة الكاملة.",
     welcomeMessage: "مرحباً بك في العيادة المتميزة لطب الأسنان! كيف يمكن لمساعدنا الذكي خدمتك اليوم؟ يمكنك حجز موعد، الاستفسار عن الخدمات، أو رفع شكوى.",
-    services: ["تنظيف الأسنان وتبييضها", "حشو وعلاج العصب", "تركيبات وتجميل الأسنان (ابتسامة هوليود)", "زراعة وتقويم الأسنان", "استشارة وفحص عام"],
+    services: [{name: "تنظيف الأسنان وتبييضها", price: "200 SAR"}, {name: "حشو وعلاج العصب", price: "500 SAR"}, {name: "تركيبات وتجميل الأسنان (ابتسامة هوليود)", price: "1000 SAR"}, {name: "زراعة وتقويم الأسنان", price: "2000 SAR"}, {name: "استشارة وفحص عام", price: "50 SAR"}],
     workingHours: "يومياً من 1:00 ظهراً حتى 9:00 مساءً (الجمعة مغلق)",
     phonePlaceholder: "05XXXXXXXX",
     subscriptionPlan: "growth",
@@ -68,7 +68,7 @@ let businesses: BusinessConfig[] = [
     iconName: "Utensils",
     systemPrompt: "أنت المساعد الذكي لمطعم لقمة وهيل الشعبي الفاخر. ترحب بالعملاء بأحر العبارات وتساعدهم في حجز طاولات للعشاء أو الغداء، وتوفير منيو الطعام، وتسجيل شكاوى الجودة أو خدمة التوصيل. المنيو المتوفر: كبسة لحم حاشي، برياني دجاج، جريش، مرقوق، كنافة نابلسية ومشروبات باردة/ساخنة. الحجز متاح من 12 ظهراً إلى 12 ليلاً.",
     welcomeMessage: "يا هلا والله بضيفنا الغالي في مطعم لقمة وهيل! 🍲 حاب تحجز طاولة لعائلتك الكريمة، أو تبي تستفسر عن المنيو والطلبات？ يسعدني مساعدتك!",
-    services: ["حجز طاولة أفراد/عائلات", "استفسار عن منيو الأكلات والأسعار", "طلب توصيل خارجي", "تلقي الشكاوى والاقتراحات"],
+    services: [{name: "حجز طاولة أفراد/عائلات", price: "100 SAR"}, {name: "استفسار عن منيو الأكلات والأسعار", price: ""}, {name: "طلب توصيل خارجي", price: "20 SAR"}, {name: "تلقي الشكاوى والاقتراحات", price: ""}],
     workingHours: "يومياً من 12:00 ظهراً حتى 12:00 منتصف الليل",
     phonePlaceholder: "05XXXXXXXX",
     subscriptionPlan: "trial",
@@ -88,7 +88,7 @@ let businesses: BusinessConfig[] = [
     iconName: "Coffee",
     systemPrompt: "أنت المساعد الذكي لمقهى رواق وسكينة. تتميز بالأسلوب الراقي جداً والهدوء والمصطلحات المريحة. تساعد الرواد في حجز أركان الدراسة الهادئة أو غرف الاجتماعات، وطلب بوكسات القهوة الفاخرة للمناسبات، وتلقي الشكاوى بروح ملؤها التفهم والود والاعتذار.",
     welcomeMessage: "أهلاً بك في رواق وسكينة.. حيث لكل كوب قهوة حكاية وهدوء☕. كيف يمكنني إضفاء السكينة على يومك ومساعدتك في حجز ركن خاص أو طلب بوكس قهوة؟",
-    services: ["حجز ركن المذاكرة والعمل الهادئ", "طلب بوكسات القهوة المفلترة والحلويات", "حجز غرفة الاجتماعات الخاصة", "تسجيل الشكاوى الفنية والخدمية"],
+    services: [{name: "حجز ركن المذاكرة والعمل الهادئ", price: "30 SAR/ساعة"}, {name: "طلب بوكسات القهوة المفلترة والحلويات", price: "150 SAR"}, {name: "حجز غرفة الاجتماعات الخاصة", price: "200 SAR/ساعة"}, {name: "تسجيل الشكاوى الفنية والخدمية", price: ""}],
     workingHours: "على مدار 24 ساعة",
     phonePlaceholder: "05XXXXXXXX",
     subscriptionPlan: "enterprise",
@@ -641,7 +641,7 @@ app.post("/api/auth/register", (req, res) => {
     iconName: businessType === 'clinic' ? 'Stethoscope' : businessType === 'restaurant' ? 'Utensils' : businessType === 'cafe' ? 'Coffee' : 'Award',
     systemPrompt: `أنت مساعد ذكي للمنشأة ${businessName}. هدفك مساعدة العملاء والإجابة عن استفساراتهم بلباقة وسرعة وتسهيل حجز المواعيد.`,
     welcomeMessage: `مرحباً بك في ${businessName}! يسعدنا خدمتك اليوم بمساعدنا الذكي.`,
-    services: ["الخدمة الأساسية الأولى", "الخدمة الثانية"],
+    services: [{name: "الخدمة الأساسية الأولى", price: ""}, {name: "الخدمة الثانية", price: ""}],
     workingHours: "يومياً من 9 صباحاً حتى 9 مساءً",
     phonePlaceholder: "05XXXXXXXX",
     subscriptionPlan: undefined,
@@ -775,7 +775,7 @@ app.post("/api/payment/reject", (req, res) => {
 
 // Update Business Configuration
 app.post("/api/business/update", (req, res) => {
-  const { id, name, systemPrompt, welcomeMessage, services, workingHours, quickReplies, googleSheetsId, googleSheetsLinked, googleSheetsAccessToken, whatsappSenderNumber, instagramAccountId, instagramAccessToken, facebookPageId, facebookAccessToken, telegramBotToken, welcomeMessageEnabled, autoPilotEnabled, generateInvoiceEnabled, inventoryUrl, inventoryType } = req.body;
+  const { id, name, systemPrompt, welcomeMessage, services, workingHours, quickReplies, googleSheetsId, googleSheetsLinked, googleSheetsAccessToken, whatsappSenderNumber, instagramAccountId, instagramAccessToken, facebookPageId, facebookAccessToken, telegramBotToken, wasenderAccessToken, wasenderWebhookSecret, welcomeMessageEnabled, autoPilotEnabled, generateInvoiceEnabled, inventoryUrl, inventoryType } = req.body;
   const index = businesses.findIndex(b => b.id === id);
   if (index !== -1) {
     businesses[index] = {
@@ -799,6 +799,8 @@ app.post("/api/business/update", (req, res) => {
       instagramAccessToken: instagramAccessToken !== undefined ? instagramAccessToken : businesses[index].instagramAccessToken,
       facebookPageId: facebookPageId !== undefined ? facebookPageId : businesses[index].facebookPageId,
       facebookAccessToken: facebookAccessToken !== undefined ? facebookAccessToken : businesses[index].facebookAccessToken,
+      wasenderAccessToken: wasenderAccessToken !== undefined ? wasenderAccessToken : businesses[index].wasenderAccessToken,
+      wasenderWebhookSecret: wasenderWebhookSecret !== undefined ? wasenderWebhookSecret : businesses[index].wasenderWebhookSecret,
       telegramBotToken: telegramBotToken !== undefined ? telegramBotToken : businesses[index].telegramBotToken
     };
     logWebhook("system", "whatsapp", `تحديث إعدادات عميل: ${businesses[index].name}`, { updated_fields: Object.keys(req.body) }, id, "success");
@@ -1369,7 +1371,7 @@ Your task is to analyze the incoming message and produce an automated, highly-em
 
 Business Configuration for ${biz.name}:
 - Type: ${biz.type}
-- Services Available: ${biz.services.join(", ")}
+- Services Available: ${biz.services.map(s => s.name + (s.price ? ' (' + s.price + ')' : '')).join(", ")}
 - Working Hours: ${biz.workingHours}
 - Custom Identity Guidelines: ${biz.systemPrompt}
 ${(biz.inventoryType && biz.inventoryUrl) ? `- Attached Inventory/Menu Data Source: ${biz.inventoryUrl} (You must use this link to check real-time availability, items, and pricing for the user)` : ''}
@@ -1379,6 +1381,15 @@ ${biz.quickReplies && biz.quickReplies.length > 0
   : "  (لا توجد ردود جاهزة مخصصة حالياً.)"}
 
 Current Date Context: The current local time is ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA')}.
+
+Currently Confirmed/Pending Bookings for this business:
+${bookings.filter(b => b.businessId === biz.id && (b.status === 'confirmed' || b.status === 'pending')).length > 0
+  ? bookings.filter(b => b.businessId === biz.id && (b.status === 'confirmed' || b.status === 'pending'))
+      .map(b => `  - Date: ${b.date}, Time: ${b.time} (Service: ${b.service})`).join('\n')
+  : "  (No upcoming bookings yet.)"}
+
+IMPORTANT BOOKING RULE: 
+If the user requests a booking for a specific Date and Time that is EXACTLY matching one of the "Currently Confirmed/Pending Bookings" above, you MUST REFUSE the booking, state that this specific time is unavailable (already booked), and suggest alternative available times. DO NOT output actionDetected=true or actionType=BOOKING in this case, handle it as a conversational FAQ/OTHER asking them to pick another time.
 
 You must return a structured JSON response matching the required schema exactly.
 If the incoming customer message matches or is conceptually identical/highly similar to one of the questions in the "Custom Static/Quick Replies" list above, you MUST prioritize and use its corresponding static answer EXACTLY as the 'responseText' (or use it as the primary core message).
@@ -1442,12 +1453,27 @@ ${biz.generateInvoiceEnabled
         actionDetailsText = "تم تحويل المحادثة إلى موظف بشري بناءً على طلب العميل أو للضرورة.";
       } else if (parsedResult.actionType === "BOOKING") {
         const details = parsedResult.bookingDetails || {};
-        bookingCreated = {
+        
+        // Double check for conflicts
+        const isConflict = bookings.some(b => 
+          b.businessId === biz.id && 
+          (b.status === 'confirmed' || b.status === 'pending') && 
+          b.date === details.date && 
+          b.time === details.time
+        );
+        
+        if (isConflict) {
+          // Force it to a message refusing the booking
+          parsedResult.responseText = `عذراً يا ${details.customerName || senderName}، الموعد المطلوب (${details.date} الساعة ${details.time}) محجوز مسبقاً. هل يناسبك موعد آخر؟`;
+          parsedResult.actionType = "OTHER";
+          parsedResult.actionDetected = false;
+        } else {
+          bookingCreated = {
           id: "b_" + Math.random().toString(36).substr(2, 9),
           businessId: biz.id,
           customerName: details.customerName || senderName || "عميل تجريبي",
           customerPhone: details.customerPhone || senderPhone || "0500000000",
-          service: details.service || biz.services[0],
+          service: details.service || (biz.services[0] ? biz.services[0].name : "غير محدد"),
           date: details.date || new Date().toISOString().split('T')[0],
           time: details.time || "17:00",
           status: "pending",
@@ -1464,6 +1490,7 @@ ${biz.generateInvoiceEnabled
         
         if (biz.googleSheetsLinked && biz.googleSheetsId && biz.googleSheetsAccessToken) {
           appendBookingToSheet(biz.googleSheetsAccessToken, biz.googleSheetsId, bookingCreated);
+        }
         }
       } else if (parsedResult.actionType === "COMPLAINT") {
         const details = parsedResult.complaintDetails || {};
@@ -1635,6 +1662,75 @@ app.get("/api/webhooks/whatsapp", (req, res) => {
     return res.status(403).send("Verification token mismatch");
   }
   return res.status(400).send("Bad Request");
+});
+
+
+
+// Wasender Webhook
+app.post("/api/webhooks/wasender", async (req, res) => {
+  const body = req.body;
+  res.status(200).send("EVENT_RECEIVED");
+  
+  try {
+    // Attempt to parse typical WhatsApp API Gateway payloads
+    let text = "";
+    let senderId = "";
+    let senderName = "عميل";
+    let businessId = req.query.businessId; // Support passing ?businessId=
+    
+    // Support multiple common formats (Evolution, WAApi, UltraMsg, WappBot)
+    if (body.data && body.data.body) {
+      text = body.data.body;
+      senderId = body.data.from || body.data.sender;
+    } else if (body.message && body.message.text) {
+      text = body.message.text;
+      senderId = body.message.from || body.message.sender;
+    } else if (body.text) {
+      text = body.text;
+      senderId = body.from || body.sender;
+    } else if (body.body) {
+      text = body.body;
+      senderId = body.from || body.sender;
+    }
+    
+    // Clean up sender ID (remove @s.whatsapp.net etc)
+    senderId = senderId ? senderId.split('@')[0] : "";
+    
+    if (text && senderId) {
+      let biz = null;
+      if (businessId) {
+        biz = businesses.find(b => b.id === businessId);
+      } else {
+        // Find by token or generic if single tenant
+        biz = businesses.find(b => b.wasenderWebhookSecret === req.headers['x-webhook-secret']) || businesses[0];
+      }
+      
+      if (!biz) return;
+      
+      logWebhook("incoming", "whatsapp", `رسالة WaSender من ${senderId}: "${text}"`, body, biz.id, "success");
+      
+      const result = await processAgentInteraction(biz, text, "whatsapp", senderName, senderId);
+      
+      if (biz.wasenderAccessToken) {
+        // Attempt to send response via WaSender API
+        await fetch('https://wasenderapi.com/api/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${biz.wasenderAccessToken}`
+          },
+          body: JSON.stringify({
+            number: senderId,
+            message: result.responseText
+          })
+        }).catch(e => console.error("WaSender Send Error:", e));
+        
+        logWebhook("outgoing", "whatsapp", `تم إرسال رد تلقائي عبر WaSender إلى ${senderId}`, { responseText: result.responseText }, biz.id, "success");
+      }
+    }
+  } catch (err) {
+    console.error("WaSender Webhook Error:", err);
+  }
 });
 
 app.post("/api/webhooks/whatsapp", async (req, res) => {

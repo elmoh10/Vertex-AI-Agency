@@ -88,8 +88,9 @@ export default function ClientConfigurator({
   const [welcomeMessageEnabled, setWelcomeMessageEnabled] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState('');
   const [workingHours, setWorkingHours] = useState('');
-  const [services, setServices] = useState<string[]>([]);
+  const [services, setServices] = useState<{name: string, price: string}[]>([]);
   const [newService, setNewService] = useState('');
+  const [newServicePrice, setNewServicePrice] = useState('');
 
   // Quick Replies states
   const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
@@ -110,6 +111,8 @@ export default function ClientConfigurator({
   const [facebookPageId, setFacebookPageId] = useState('');
   const [facebookAccessToken, setFacebookAccessToken] = useState('');
   const [telegramBotToken, setTelegramBotToken] = useState('');
+  const [wasenderAccessToken, setWasenderAccessToken] = useState('');
+  const [wasenderWebhookSecret, setWasenderWebhookSecret] = useState('');
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(false);
   const [generateInvoiceEnabled, setGenerateInvoiceEnabled] = useState(false);
 
@@ -148,6 +151,8 @@ export default function ClientConfigurator({
         setFacebookPageId(biz.facebookPageId || '');
         setFacebookAccessToken(biz.facebookAccessToken || '');
         setTelegramBotToken(biz.telegramBotToken || '');
+        setWasenderAccessToken(biz.wasenderAccessToken || '');
+        setWasenderWebhookSecret(biz.wasenderWebhookSecret || '');
         setAutoPilotEnabled(biz.autoPilotEnabled || false);
         setGenerateInvoiceEnabled(biz.generateInvoiceEnabled || false);
         setSaveStatus('idle');
@@ -177,9 +182,10 @@ export default function ClientConfigurator({
 
   // Add a new service
   const handleAddService = () => {
-    if (newService.trim() && !services.includes(newService.trim())) {
-      setServices([...services, newService.trim()]);
+    if (newService.trim() && !services.some(s => s.name === newService.trim())) {
+      setServices([...services, { name: newService.trim(), price: newServicePrice.trim() }]);
       setNewService('');
+      setNewServicePrice('');
     }
   };
 
@@ -372,6 +378,8 @@ export default function ClientConfigurator({
       facebookPageId,
       facebookAccessToken,
       telegramBotToken,
+      wasenderAccessToken,
+      wasenderWebhookSecret,
       autoPilotEnabled,
       generateInvoiceEnabled
     };
@@ -575,9 +583,16 @@ export default function ClientConfigurator({
               <div className="flex gap-2">
                 <input 
                   type="text"
-                  placeholder="مثال: حجز موعد كشف، تنظيف أسنان..."
+                  placeholder="الخدمة (مثال: تنظيف أسنان)"
                   value={newService}
                   onChange={(e) => setNewService(e.target.value)}
+                  className="flex-[2] bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none transition-colors"
+                />
+                <input 
+                  type="text"
+                  placeholder="السعر (مثال: 200 ريال)"
+                  value={newServicePrice}
+                  onChange={(e) => setNewServicePrice(e.target.value)}
                   className="flex-1 bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none transition-colors"
                 />
                 <button 
@@ -886,6 +901,26 @@ export default function ClientConfigurator({
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400">API Access Token (wasenderapi.com)</label>
+                  <input 
+                    type="text"
+                    placeholder="ضع التوكن هنا لتسهيل الربط"
+                    value={wasenderAccessToken}
+                    onChange={(e) => setWasenderAccessToken(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400">Webhook Secret (wasenderapi.com)</label>
+                  <input 
+                    type="text"
+                    placeholder="كلمة سر الويب هوك"
+                    value={wasenderWebhookSecret}
+                    onChange={(e) => setWasenderWebhookSecret(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400">معرف حساب انستجرام (اختياري)</label>
                   <input 
                     type="text"
@@ -1157,7 +1192,7 @@ export default function ClientConfigurator({
                   {services.map((svc, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-xs text-slate-300">
                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                      <span>{svc}</span>
+                      <span>{svc.name} {svc.price ? `(${svc.price})` : ''}</span>
                     </div>
                   ))}
                 </div>
